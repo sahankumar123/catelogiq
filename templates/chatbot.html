@@ -1,0 +1,247 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CatelogIQ - Chatbot</title>
+    <style>
+      @keyframes pulseGlow {
+        0% {
+          box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
+        }
+        50% {
+          box-shadow: 0 0 20px rgba(0, 255, 255, 0.6);
+        }
+        100% {
+          box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
+        }
+      }
+      @keyframes fadeInUp {
+        0% {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        100% {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      @keyframes glowBorder {
+        0%,
+        100% {
+          border-color: #00f2ff;
+        }
+        50% {
+          border-color: #66ffff;
+        }
+      }
+      @keyframes blink {
+        0%,
+        100% {
+          opacity: 0.2;
+        }
+        50% {
+          opacity: 1;
+        }
+      }
+    </style>
+  </head>
+  <body
+    style="
+      background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
+      font-family: 'Segoe UI', Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    "
+  >
+    <div
+      class="chat-container"
+      style="
+        width: 90%;
+        max-width: 800px;
+        padding: 30px;
+        background: rgba(10, 25, 47, 0.85);
+        border-radius: 20px;
+        backdrop-filter: blur(12px);
+        box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
+        animation: pulseGlow 3s ease-in-out infinite;
+      "
+    >
+      <div class="chat-header" style="text-align: center; margin-bottom: 25px">
+        <h1
+          style="
+            font-size: 2.5em;
+            background: linear-gradient(to right, #00f2ff, #1cefff);
+            -webkit-background-clip: text;
+            color: transparent;
+            margin: 0;
+          "
+        >
+          CatelogIQ Chatbot
+        </h1>
+        <p style="color: #ccefff; font-size: 1.1em">Ask your questions below</p>
+        <a
+          href="{% url 'analysis_options' %}"
+          style="
+            color: #80eaff;
+            text-decoration: none;
+            font-weight: bold;
+            display: inline-block;
+            margin-top: 10px;
+          "
+          >← Back to Analysis Options</a
+        >
+      </div>
+
+      {% if messages %} {% for message in messages %}
+      <div class="message {{ message.tags }}">{{ message }}</div>
+      {% endfor %} {% endif %}
+
+      <div
+        id="chat-box"
+        style="
+          height: 400px;
+          overflow-y: auto;
+          border: 2px solid transparent;
+          border-radius: 15px;
+          padding: 15px;
+          background: linear-gradient(
+            to bottom right,
+            rgba(0, 40, 60, 0.6),
+            rgba(0, 70, 100, 0.4)
+          );
+          box-shadow: inset 0 0 8px rgba(0, 255, 255, 0.1);
+          animation: glowBorder 4s ease-in-out infinite;
+        "
+      >
+        <div
+          class="message bot-message"
+          style="
+            background: #003349;
+            color: #d8faff;
+            padding: 12px 18px;
+            border-radius: 12px;
+            max-width: 75%;
+            margin-bottom: 10px;
+            animation: fadeInUp 0.4s ease;
+          "
+        >
+          Hi! I'm your assistant. Ask me anything about your data.
+        </div>
+      </div>
+
+      <div
+        class="chat-input"
+        style="margin-top: 15px; display: flex; gap: 10px"
+      >
+        <input
+          type="text"
+          id="user-input"
+          placeholder="Type your question..."
+          style="
+            flex: 1;
+            padding: 12px;
+            font-size: 1em;
+            border-radius: 8px;
+            background: #021e30;
+            border: 1px solid #00f2ff;
+            color: #fff;
+            outline: none;
+            transition: box-shadow 0.3s ease;
+          "
+          onfocus="this.style.boxShadow='0 0 10px #00f2ff'"
+          onblur="this.style.boxShadow='none'"
+        />
+        <button
+          onclick="sendMessage()"
+          style="
+            padding: 12px 25px;
+            background: linear-gradient(to right, #00f2ff, #0079bf);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: transform 0.2s ease;
+          "
+          onmouseover="this.style.transform='scale(1.05)'"
+          onmouseout="this.style.transform='scale(1)'"
+        >
+          Send
+        </button>
+      </div>
+    </div>
+
+    <script>
+      async function sendMessage() {
+        const input = document.getElementById("user-input");
+        const chatBox = document.getElementById("chat-box");
+        const query = input.value.trim();
+        if (!query) return;
+
+        const userMessage = document.createElement("div");
+        userMessage.textContent = query;
+        userMessage.style.background = "#004c6d";
+        userMessage.style.color = "#ffffff";
+        userMessage.style.padding = "12px 18px";
+        userMessage.style.borderRadius = "12px";
+        userMessage.style.maxWidth = "75%";
+        userMessage.style.marginLeft = "auto";
+        userMessage.style.marginBottom = "10px";
+        userMessage.style.animation = "fadeInUp 0.4s ease";
+        chatBox.appendChild(userMessage);
+
+        input.value = "";
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+        try {
+          const response = await fetch("{% url 'chatbot' %}", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-CSRFToken": "{{ csrf_token }}",
+            },
+            body: JSON.stringify({ query: query }),
+          });
+
+          const data = await response.json();
+          const botMessage = document.createElement("div");
+          botMessage.textContent = data.response || "Something went wrong.";
+          botMessage.style.background = "#003349";
+          botMessage.style.color = "#d8faff";
+          botMessage.style.padding = "12px 18px";
+          botMessage.style.borderRadius = "12px";
+          botMessage.style.maxWidth = "75%";
+          botMessage.style.marginRight = "auto";
+          botMessage.style.marginBottom = "10px";
+          botMessage.style.animation = "fadeInUp 0.4s ease";
+          chatBox.appendChild(botMessage);
+          chatBox.scrollTop = chatBox.scrollHeight;
+        } catch (err) {
+          const errorMsg = document.createElement("div");
+          errorMsg.textContent = "Error connecting to the chatbot.";
+          errorMsg.style.background = "#992d2d";
+          errorMsg.style.color = "#fff";
+          errorMsg.style.padding = "12px 18px";
+          errorMsg.style.borderRadius = "12px";
+          errorMsg.style.marginBottom = "10px";
+          errorMsg.style.maxWidth = "75%";
+          errorMsg.style.marginRight = "auto";
+          chatBox.appendChild(errorMsg);
+        }
+      }
+
+      document
+        .getElementById("user-input")
+        .addEventListener("keypress", function (e) {
+          if (e.key === "Enter") sendMessage();
+        });
+    </script>
+  </body>
+</html>
