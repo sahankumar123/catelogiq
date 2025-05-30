@@ -1,0 +1,700 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Log Analytics - CatelogIQ</title>
+    <!-- Tailwind CSS CDN -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+    <!-- Bootstrap CSS for Alerts -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <!-- Google Fonts: Poppins -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="icon" type="image/x-icon" href="{% static 'favicon.ico' %}" />
+    <style>
+            /* Responsive Design */
+      @media (max-width: 768px) {
+        .header {
+          font-size: 1.8rem;
+          padding: 1rem 0;
+        }
+
+        .data-source {
+          font-size: 1.2rem;
+          margin: 0.75rem 0 0.5rem;
+        }
+
+        .dropzone {
+          padding: 1.25rem;
+          margin: 0.5rem;
+        }
+
+        .btn-upload,
+        .btn-analysis {
+          padding: 0.5rem 1.5rem;
+          font-size: 0.9rem;
+        }
+
+        .center-wrapper {
+          padding-top: 4rem;
+        }
+
+        .upload-animation {
+          width: 40px;
+          height: 40px;
+          border-width: 3px;
+        }
+
+        .sparkle {
+          width: 4px;
+          height: 4px;
+        }
+
+        .success-message {
+          font-size: 0.9rem;
+          padding: 0.75rem;
+        }
+      }
+
+      /* Custom alert text colors */
+      .alert-success,
+      .alert-danger,
+      .alert-info,
+      .alert-warning {
+        color: #ffffff !important;
+      }
+
+      body {
+        font-family: "Poppins", sans-serif;
+        background: linear-gradient(135deg, #1e1e2e, #3b0764);
+        min-height: 100vh;
+        overflow-x: hidden;
+        position: relative;
+        color: #f1f5f9;
+      }
+
+      /* Particle Canvas Background */
+      #particles-js {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+      }
+
+      /* Header: Text Only, Animation Removed */
+      .header {
+        color: #ffffff;
+        text-align: center;
+        padding: 1.5rem 0;
+        font-size: 2.5rem;
+        font-weight: 700;
+        text-shadow: 0 0 15px rgba(167, 139, 250, 0.7),
+          0 0 25px rgba(239, 239, 242, 0); /* Static shadow */
+        position: absolute;
+        top: 0;
+        width: 100%;
+        z-index: 10;
+      }
+
+      /* Centering Wrapper */
+      .center-wrapper {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        padding-top: 5rem;
+      }
+
+      /* Dropzone Styling */
+      .dropzone {
+        border: 3px dashed #feca57;
+        border-radius: 1rem;
+        padding: 2rem;
+        background: rgba(246, 171, 11, 0.15);
+        backdrop-filter: blur(10px);
+        max-width: 600px;
+        margin: 0.5rem auto;
+        text-align: center;
+        transition: all 0.3s ease;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        animation: pulseGlow 2s infinite ease-in-out;
+        position: relative;
+      }
+
+      .dropzone.dragover {
+        background: rgba(255, 111, 97, 0.25);
+        border-color: #d339a8;
+        transform: scale(1.03);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+      }
+
+      .dropzone:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+      }
+
+      @keyframes pulseGlow {
+        0% {
+          box-shadow: 0 0 15px rgba(254, 202, 87, 0.4);
+        }
+        50% {
+          box-shadow: 0 0 25px rgba(254, 202, 87, 0.6);
+        }
+        100% {
+          box-shadow: 0 0 15px rgba(254, 202, 87, 0.4);
+        }
+      }
+
+      /* Upload Animation */
+      .upload-animation {
+        display: none;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 60px;
+        height: 60px;
+        border: 4px solid #de1515;
+        border-radius: 50%;
+        box-shadow: 0 0 15px rgba(255, 111, 97, 0.7);
+      }
+
+      .upload-animation.active {
+        display: block;
+        animation: ringPulse 1s ease-in-out 3,
+          ringFill 1s ease-in-out 1s forwards;
+      }
+
+      @keyframes ringPulse {
+        0% {
+          opacity: 0.3;
+          transform: translate(-50%, -50%) scale(0.8);
+        }
+        50% {
+          opacity: 1;
+          transform: translate(-50%, -50%) scale(1);
+          box-shadow: 0 0 20px rgba(255, 111, 97, 1);
+        }
+        100% {
+          opacity: 0.3;
+          transform: translate(-50%, -50%) scale(0.8);
+        }
+      }
+
+      @keyframes ringFill {
+        0% {
+          border-color: #feca57;
+          background: transparent;
+        }
+        100% {
+          border-color: #ff6f61;
+          background: rgba(255, 111, 97, 0.3);
+        }
+      }
+
+      .sparkle {
+        position: absolute;
+        width: 6px;
+        height: 6px;
+        background: #ffffff;
+        border-radius: 50%;
+        animation: sparkleBurst 0.5s ease-out forwards;
+      }
+
+      @keyframes sparkleBurst {
+        0% {
+          transform: translate(0, 0);
+          opacity: 1;
+        }
+        100% {
+          transform: translate(var(--dx), var(--dy));
+          opacity: 0;
+        }
+      }
+
+      /* Success Message Styling */
+      .success-message {
+        max-width: 600px;
+        margin: 1rem auto;
+        border-radius: 0.75rem;
+        background: #ffffff; /* Coral background */
+        color: #ffffff;
+        padding: 1rem;
+        text-align: center;
+        font-size: 1.1rem;
+        font-weight: 600;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3),
+          0 0 15px rgba(56, 42, 41, 0.7);
+        animation: slideInFromTop 0.6s ease-out;
+        display: none; /* Hidden by default */
+      }
+
+      .success-message.show {
+        display: block;
+        color: #ffffff;
+      }
+
+      @keyframes slideInFromTop {
+        0% {
+          transform: translateY(-50px);
+          opacity: 0;
+        }
+        100% {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+
+      /* Button Styling */
+      .btn-upload,
+      .btn-analysis {
+        background: linear-gradient(90deg, #feca57, #ff6f61);
+        color: white;
+        padding: 0.75rem 2.5rem;
+        border-radius: 50px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .btn-analysis {
+        background: linear-gradient(90deg, #a78bfa, #22d3ee);
+      }
+
+      .btn-upload:hover,
+      .btn-analysis:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+        animation: neonGlow 1.5s infinite;
+      }
+
+      @keyframes neonGlow {
+        0% {
+          box-shadow: 0 0 10px #feca57, 0 0 20px #ff6f61, 0 0 30px #feca57;
+        }
+        50% {
+          box-shadow: 0 0 20px #ff6f61, 0 0 30px #feca57, 0 0 40px #ff6f61;
+        }
+        100% {
+          box-shadow: 0 0 10px #feca57, 0 0 20px #ff6f61, 0 0 30px #feca57;
+        }
+      }
+
+      .btn-analysis:hover {
+        animation: neonGlowAnalysis 1.5s infinite;
+      }
+
+      @keyframes neonGlowAnalysis {
+        0% {
+          box-shadow: 0 0 10px #a78bfa, 0 0 20px #22d3ee, 0 0 30px #a78bfa;
+        }
+        50% {
+          box-shadow: 0 0 20px #22d3ee, 0 0 30px #a78bfa, 0 0 40px #22d3ee;
+        }
+        100% {
+          box-shadow: 0 0 10px #a78bfa, 0 0 20px #22d3ee, 0 0 30px #a78bfa;
+        }
+      }
+
+      .btn-upload::after,
+      .btn-analysis::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: sagr0;
+        height: 0;
+        background: rgba(232, 155, 208, 0.392);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        transition: width 0.5s ease, height 0.5s ease;
+      }
+
+      .btn-upload:hover::after,
+      .btn-analysis:hover::after {
+        width: 250px;
+        height: 250px;
+      }
+
+      /* Alert Styling */
+      .alert {
+        max-width: 600px;
+        margin: 1rem auto;
+        border-radius: 0.75rem;
+        background: rgba(245, 249, 247, 0);
+
+        animation: slideInFromLeft 0.6s ease-out;
+      }
+
+      @keyframes slideInFromLeft {
+        0% {
+          transform: translateX(-50px);
+          opacity: 0;
+        }
+        100% {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+
+      /* Data Source Header */
+      .data-source {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #f1f5f9;
+        text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        margin: 1rem 0 0.5rem;
+        animation: fadeIn 1.2s ease-out;
+      }
+
+      /* Container Animation */
+      .container {
+        animation: fadeIn 1.5s ease-out;
+      }
+
+      @keyframes fadeIn {
+        0% {
+          opacity: 0;
+        }
+        100% {
+          opacity: 1;
+        }
+      }
+
+      /* File Input Label */
+      .file-label {
+        font-size: 1rem;
+        color: #e2e8f0;
+        margin-bottom: 0.75rem;
+        animation: fadeIn 1.8s ease-out;
+      }
+
+      /* Responsive Design */
+      @media (max-width: 768px) {
+        .header {
+          font-size: 1.8rem;
+          padding: 1rem 0;
+        }
+
+        .data-source {
+          font-size: 1.2rem;
+          margin: 0.75rem 0 0.5rem;
+        }
+
+        .dropzone {
+          padding: 1.25rem;
+          margin: 0.5rem;
+        }
+
+        .btn-upload,
+        .btn-analysis {
+          padding: 0.5rem 1.5rem;
+          font-size: 0.9rem;
+        }
+
+        .center-wrapper {
+          padding-top: 4rem;
+        }
+
+        .upload-animation {
+          width: 40px;
+          height: 40px;
+          border-width: 3px;
+        }
+
+        .sparkle {
+          width: 4px;
+          height: 4px;
+        }
+
+        .success-message {
+          font-size: 0.9rem;
+          padding: 0.75rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Particle.js Background -->
+    <div id="particles-js"></div>
+
+    <h1 class="header">CatelogIQ</h1>
+    <!-- Centering Wrapper -->
+    <div class="center-wrapper">
+      <div class="container mx-auto px-4">
+        <h2 class="data-source text-center">Data Source</h2>
+        <div id="alert-container">
+          {% if messages %} {% for message in messages %}
+          <div
+            class="alert alert-{{ message.tags }} alert-dismissible fade show"
+            role="alert"
+          >
+            {{ message }}
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="alert"
+              aria-label="Close"
+            ></button>
+          </div>
+          {% endfor %} {% endif %}
+        </div>
+        <!-- Success Message -->
+        <div id="success-message" class="success-message hidden">
+          File uploaded successfully!
+          <button
+            type="button"
+            class="btn-close btn-close-white float-end"
+            data-bs-dismiss="alert"
+            aria-label="Close"
+          ></button>
+        </div>
+        <!-- Upload Files Form -->
+        <form method="post" enctype="multipart/form-data" id="upload-form">
+          {% csrf_token %}
+          <div class="dropzone" id="dropzone-upload">
+            <p class="file-label">
+              Drag and drop your CSV, log, or text file here or click to upload.
+            </p>
+            <input
+              type="file"
+              name="csv_file"
+              accept=".csv,.log,.txt"
+              id="fileInput-upload"
+              class="hidden"
+            />
+            <div class="upload-animation" id="upload-animation"></div>
+          </div>
+          <input type="hidden" name="action" value="upload" />
+          <div class="flex justify-center gap-4 mt-4">
+            <button type="submit" class="btn-upload">Upload Files</button>
+            <a href="{% url 'analysis_options' %}" class="btn-analysis"
+              >Show Analysis</a
+            >
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Particles.js -->
+    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+    <script>
+      // Particles.js Configuration
+      particlesJS("particles-js", {
+        particles: {
+          number: { value: 60, density: { enable: true, value_area: 800 } },
+          color: { value: "#ffffff" },
+          shape: { type: "circle", stroke: { width: 0, color: "#000000" } },
+          opacity: { value: 0.4, random: true },
+          size: { value: 3, random: true },
+          line_linked: {
+            enable: true,
+            distance: 120,
+            color: "#ffffff",
+            opacity: 0.3,
+            width: 1,
+          },
+          move: {
+            enable: true,
+            speed: 1.5,
+            direction: "none",
+            random: false,
+            straight: false,
+            out_mode: "out",
+            bounce: false,
+          },
+        },
+        interactivity: {
+          detect_on: "canvas",
+          events: {
+            onhover: { enable: true, mode: "repulse" },
+            onclick: { enable: true, mode: "push" },
+            resize: true,
+          },
+          modes: {
+            repulse: { distance: 80, duration: 0.4 },
+            push: { particles_nb: 3 },
+          },
+        },
+        retina_detect: true,
+      });
+
+      // Drag-and-Drop and Upload Animation
+      const dropzoneUpload = document.getElementById("dropzone-upload");
+      const fileInputUpload = document.getElementById("fileInput-upload");
+      const uploadForm = document.getElementById("upload-form");
+      const uploadAnimation = document.getElementById("upload-animation");
+      const alertContainer = document.getElementById("alert-container");
+      const successMessage = document.getElementById("success-message");
+
+      // Handle click to open file input
+      dropzoneUpload.addEventListener("click", () => fileInputUpload.click());
+
+      // Handle dragover
+      dropzoneUpload.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        dropzoneUpload.classList.add("dragover");
+      });
+
+      // Handle dragleave
+      dropzoneUpload.addEventListener("dragleave", () => {
+        dropzoneUpload.classList.remove("dragover");
+      });
+
+      // Handle drop
+      dropzoneUpload.addEventListener("drop", (e) => {
+        e.preventDefault();
+        dropzoneUpload.classList.remove("dragover");
+        const files = e.dataTransfer.files;
+        if (
+          files.length > 0 &&
+          [".csv", ".log", ".txt"].includes(
+            files[0].name.toLowerCase().slice(-4)
+          )
+        ) {
+          fileInputUpload.files = files;
+          handleUpload();
+        } else {
+          showAlert("Please upload a CSV, log, or text file.", "danger");
+        }
+      });
+
+      // Handle file input change
+      fileInputUpload.addEventListener("change", () => {
+        if (fileInputUpload.files.length > 0) {
+          handleUpload();
+        }
+      });
+
+      // Handle form submission via AJAX
+      async function handleUpload() {
+        const formData = new FormData(uploadForm);
+        dropzoneUpload.querySelector(".file-label").style.opacity = "0.5";
+
+        try {
+          const response = await fetch(uploadForm.action, {
+            method: "POST",
+            body: formData,
+            headers: {
+              "X-Requested-With": "XMLHttpRequest",
+            },
+          });
+
+          const text = await response.text();
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(text, "text/html");
+          const newAlerts = doc.querySelectorAll(".alert");
+
+          // Clear existing alerts
+          alertContainer.innerHTML = "";
+
+          let isSuccess = false;
+          newAlerts.forEach((alert) => {
+            alertContainer.appendChild(alert);
+            if (alert.classList.contains("alert-success")) {
+              isSuccess = true;
+            }
+            if (
+              alert.classList.contains("alert-danger") ||
+              alert.classList.contains("alert-warning")
+            ) {
+              // Handle error (e.g., file already exists)
+              dropzoneUpload.querySelector(".file-label").style.opacity = "1";
+            }
+          });
+
+          // Trigger animation and success message only on success
+          if (isSuccess) {
+            startUploadAnimation();
+          }
+        } catch (error) {
+          showAlert("An error occurred during upload.", "danger");
+          dropzoneUpload.querySelector(".file-label").style.opacity = "1";
+        }
+      }
+
+      // Show alert dynamically
+      function showAlert(message, type) {
+        const alertDiv = document.createElement("div");
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+        alertDiv.innerHTML = `
+          ${message}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        alertContainer.appendChild(alertDiv);
+        alertDiv.style.animation =
+          "slideInFromLeft 0.6s ease-out, fadeOut 0.5s ease-out 3s forwards";
+      }
+
+      // Upload animation with ring, sparkles, and success message
+      function startUploadAnimation() {
+        uploadAnimation.classList.add("active");
+        dropzoneUpload.querySelector(".file-label").style.opacity = "0.5";
+
+        // Create sparkles after ring animation
+        setTimeout(() => {
+          for (let i = 0; i < 10; i++) {
+            const sparkle = document.createElement("div");
+            sparkle.className = "sparkle";
+            const angle = Math.random() * 2 * Math.PI;
+            const distance = 20 + Math.random() * 20;
+            sparkle.style.setProperty(
+              "--dx",
+              `${Math.cos(angle) * distance}px`
+            );
+            sparkle.style.setProperty(
+              "--dy",
+              `${Math.sin(angle) * distance}px`
+            );
+            uploadAnimation.appendChild(sparkle);
+          }
+        }, 2000);
+
+        // Show success message and reset
+        setTimeout(() => {
+          uploadAnimation.classList.remove("active");
+          uploadAnimation.innerHTML = ""; // Clear sparkles
+          dropzoneUpload.querySelector(".file-label").style.opacity = "1";
+          fileInputUpload.value = ""; // Clear file input
+          successMessage.classList.add("show"); // Show success message
+        }, 2500);
+      }
+
+      // Handle success message dismissal
+      successMessage
+        .querySelector(".btn-close")
+        .addEventListener("click", () => {
+          successMessage.classList.remove("show");
+        });
+
+      // Fade out animation for alerts
+      const style = document.createElement("style");
+      style.innerHTML = `
+        @keyframes fadeOut {
+          0% { opacity: 1; }
+          100% { opacity: 0; display: none; }
+        }
+      `;
+      document.head.appendChild(style);
+    </script>
+  </body>
+</html>

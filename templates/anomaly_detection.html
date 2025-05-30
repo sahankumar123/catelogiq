@@ -1,0 +1,377 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Anomaly Detection - CatelogIQ</title>
+    <!-- Tailwind CSS CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+    <!-- Bootstrap CSS for Alerts and Table -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <!-- Google Fonts: Poppins -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet" />
+    <link rel="icon" type="image/x-icon" href="{% static 'favicon.ico' %}" />
+    <style>
+      body {
+        font-family: 'Poppins', sans-serif;
+        background: linear-gradient(135deg, #0a0a2b, #4b0082); /* Cosmic gradient */
+        min-height: 100vh;
+        overflow-x: hidden;
+        position: relative;
+        color: #e6e6fa; /* Light gray text */
+      }
+
+      /* Particle Canvas Background */
+      #particles-js {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+      }
+
+      /* Header: Static, cosmic glow */
+      .header {
+        color: #ffffff;
+        text-align: center;
+        padding: 1.5rem 0;
+        font-size: 2.5rem;
+        font-weight: 700;
+        letter-spacing: 0.05rem;
+        text-shadow: 0 0 15px rgba(0, 196, 180, 0.7), 0 0 25px rgba(199, 21, 133, 0.7); /* Teal/magenta glow */
+        position: absolute;
+        top: 0;
+        width: 100%;
+        z-index: 10;
+      }
+
+      /* Centering Wrapper */
+      .center-wrapper {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        padding-top: 5rem;
+      }
+
+      /* Table Container */
+      .table-container {
+        background: rgba(10, 10, 43, 0.2); /* Navy backdrop */
+        backdrop-filter: blur(10px);
+        border: 2px solid #00c4b4; /* Teal border */
+        border-radius: 1rem;
+        padding: 1.5rem;
+        max-width: 1000px;
+        margin: 0.5rem auto;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        animation: cosmicPulse 2s infinite ease-in-out;
+      }
+
+      @keyframes cosmicPulse {
+        0% { box-shadow: 0 0 15px rgba(0, 196, 180, 0.4); }
+        50% { box-shadow: 0 0 25px rgba(0, 196, 180, 0.6); }
+        100% { box-shadow: 0 0 15px rgba(0, 196, 180, 0.4); }
+      }
+
+      /* Table Styling */
+      .table {
+        color: #e6e6fa;
+        border-collapse: separate;
+        border-spacing: 0;
+      }
+
+      .table th {
+        background: #0a0a2b; /* Navy header */
+        color: #ffffff;
+        font-weight: 600;
+        border: 1px solid #00c4b4; /* Teal borders */
+        padding: 0.75rem;
+      }
+
+      .table td {
+        border: 1px solid #00c4b4;
+        padding: 0.75rem;
+        background: white;
+        animation: fadeIn 0.6s ease-out;
+        animation-delay: calc(0.1s * var(--row-index));
+      }
+
+      .table-striped tbody tr:nth-of-type(odd) td {
+        background: white;
+      }
+
+      /* .table tbody tr:hover td {
+        background: rgba(199, 21, 133, 0.3);  */
+        /* box-shadow: 0 0 10px rgba(199, 21, 133, 0.7);
+        transition: all 0.3s ease;
+      } */
+
+      @keyframes fadeIn {
+        0% { opacity: 0; transform: translateY(10px); }
+        100% { opacity: 1; transform: translateY(0); }
+      }
+
+      /* Success Message */
+      .success-message {
+        max-width: 600px;
+        margin: 1rem auto;
+        border-radius: 0.75rem;
+        background: #c71585; /* Magenta */
+        color: #ffffff;
+        padding: 1rem;
+        text-align: center;
+        font-size: 1.1rem;
+        font-weight: 600;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3), 0 0 15px rgba(199, 21, 133, 0.7);
+        animation: slideInFromTop 0.6s ease-out;
+        display: none;
+      }
+
+      .success-message.show {
+        display: block;
+      }
+
+      @keyframes slideInFromTop {
+        0% { transform: translateY(-50px); opacity: 0; }
+        100% { transform: translateY(0); opacity: 1; }
+      }
+
+      /* Alerts */
+      .alert {
+        max-width: 600px;
+        margin: 1rem auto;
+        border-radius: 0.75rem;
+        background: rgba(10, 10, 43, 0.2); /* Navy backdrop */
+        backdrop-filter: blur(10px);
+        animation: slideInFromLeft 0.6s ease-out;
+      }
+
+      @keyframes slideInFromLeft {
+        0% { transform: translateX(-50px); opacity: 0; }
+        100% { transform: translateX(0); opacity: 1; }
+      }
+
+      /* Back Button */
+      .btn-back {
+        background: linear-gradient(90deg, #4b0082, #87ceeb); /* Indigo to sky blue */
+        color: white;
+        padding: 0.75rem 2.5rem;
+        border-radius: 50px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+        position: relative;
+        overflow: hidden;
+        text-decoration: none;
+        display: inline-block;
+      }
+
+      .btn-back:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+        animation: starryGlowAnalysis 1.5s infinite;
+      }
+
+      @keyframes starryGlowAnalysis {
+        0% { box-shadow: 0 0 10px #4b0082, 0 0 20px #87ceeb, 0 0 30px #4b0082; }
+        50% { box-shadow: 0 0 20px #87ceeb, 0 0 30px #4b0082, 0 0 40px #87ceeb; }
+        100% { box-shadow: 0 0 10px #4b0082, 0 0 20px #87ceeb, 0 0 30px #4b0082; }
+      }
+
+      .btn-back::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        transition: width 0.5s ease, height 0.5s ease;
+      }
+
+      .btn-back:hover::after {
+        width: 250px;
+        height: 250px;
+      }
+
+      /* No Results Message */
+      .no-results {
+        font-size: 1.2rem;
+        color: #e6e6fa;
+        text-align: center;
+        margin-top: 2rem;
+        animation: fadeIn 1.2s ease-out;
+      }
+
+      /* Responsive Design */
+      @media (max-width: 768px) {
+        .header {
+          font-size: 1.8rem;
+          padding: 1rem 0;
+        }
+
+        .center-wrapper {
+          padding-top: 4rem;
+        }
+
+        .table-container {
+          padding: 1rem;
+          margin: 0.5rem;
+        }
+
+        .table th, .table td {
+          font-size: 0.8rem;
+          padding: 0.5rem;
+        }
+
+        .btn-back {
+          padding: 0.5rem 1.5rem;
+          font-size: 0.9rem;
+        }
+
+        .success-message {
+          font-size: 0.9rem;
+          padding: 0.75rem;
+        }
+
+        .no-results {
+          font-size: 1rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Particle.js Background -->
+    <div id="particles-js"></div>
+
+    <h1 class="header">CatelogIQ - Anomaly Detection</h1>
+    <!-- Centering Wrapper -->
+    <div class="center-wrapper">
+      <div class="container mx-auto px-4">
+        <h2 class="text-center text-2xl font-semibold text-white mb-4">Anomaly Detection Results</h2>
+        <div id="alert-container">
+          {% if messages %}
+          {% for message in messages %}
+          <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+          {% endfor %}
+          {% endif %}
+        </div>
+        <!-- Success Message -->
+        <div id="success-message" class="success-message hidden">
+          Anomaly detection completed!
+          <button type="button" class="btn-close btn-close-white float-end" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% if results %}
+        <div class="table-container">
+          <table class="table table-striped table-bordered">
+            <thead class="table-dark">
+              <tr>
+                {% for key in results.0.keys %}
+                <th>{{ key }}</th>
+                {% endfor %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in results %}
+              <tr style="--row-index: {{ forloop.counter0 }}">
+                {% for value in row.values %}
+                <td>{{ value }}</td>
+                {% endfor %}
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <p class="no-results">No anomaly detection results available.</p>
+        {% endif %}
+        <div class="text-center mt-4">
+          <a href="{% url 'analysis_options' %}" class="btn-back">Back to Analysis Options</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Particles.js -->
+    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+    <script>
+      // Particles.js Configuration (cosmic stars)
+      particlesJS("particles-js", {
+        particles: {
+          number: { value: 60, density: { enable: true, value_area: 800 } },
+          color: { value: "#b0e0e6" }, /* Cyan particles */
+          shape: { type: ["circle", "polygon"], stroke: { width: 0, color: "#000000" } },
+          opacity: { value: 0.5, random: true },
+          size: { value: 3, random: true },
+          line_linked: {
+            enable: true,
+            distance: 100,
+            color: "#b0e0e6",
+            opacity: 0.3,
+            width: 1,
+          },
+          move: {
+            enable: true,
+            speed: 1.0, /* Slower for cosmic effect */
+            direction: "none",
+            random: false,
+            straight: false,
+            out_mode: "out",
+            bounce: false,
+          },
+        },
+        interactivity: {
+          detect_on: "canvas",
+          events: {
+            onhover: { enable: true, mode: "repulse" },
+            onclick: { enable: true, mode: "push" },
+            resize: true,
+          },
+          modes: {
+            repulse: { distance: 80, duration: 0.4 },
+            push: { particles_nb: 3 },
+          },
+        },
+        retina_detect: true,
+      });
+
+      // Show success message if anomaly detection completed
+      document.addEventListener("DOMContentLoaded", () => {
+        const successAlert = document.querySelector(".alert-success");
+        const successMessage = document.getElementById("success-message");
+        if (successAlert && successAlert.textContent.toLowerCase().includes("anomaly")) {
+          successMessage.classList.add("show");
+        }
+      });
+
+      // Handle success message dismissal
+      const successMessage = document.getElementById("success-message");
+      if (successMessage) {
+        successMessage.querySelector(".btn-close").addEventListener("click", () => {
+          successMessage.classList.remove("show");
+        });
+      }
+
+      // Fade out animation for alerts
+      const style = document.createElement("style");
+      style.innerHTML = `
+        @keyframes fadeOut {
+          0% { opacity: 1; }
+          100% { opacity: 0; display: none; }
+        }
+      `;
+      document.head.appendChild(style);
+    </script>
+  </body>
+</html>
