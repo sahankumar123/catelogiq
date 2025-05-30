@@ -1,0 +1,384 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text Classification - CatelogIQ</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts for Poppins -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Custom CSS for a fresh, modern styling */
+        body {
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(180deg, #ecfeff 0%, #f0f9ff 100%);
+            color: #1e3a8a;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Static Header with a modern pastel design */
+        .header {
+            text-align: center;
+            padding: 2rem 0;
+            background: linear-gradient(90deg, #a5b4fc 0%, #c4b5fd 100%);
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+            border-bottom: 2px solid #e0e7ff;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #1e3a8a;
+            margin: 0;
+            letter-spacing: 1px;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Main layout */
+        .main-container {
+            display: flex;
+            padding: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Left sidebar with a soft pastel background */
+        .left-sidebar {
+            width: 350px;
+            background: #f8fafc;
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e0e7ff;
+        }
+
+        /* Text box with a modern card-like design */
+        .text-box {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid #e0e7ff;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.03);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .text-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: transparent;
+            transition: background 0.3s ease;
+        }
+
+        /* Pastel colors for each text box */
+        .text-box:nth-child(1)::before {
+            background: #a5b4fc;
+        }
+
+        .text-box:nth-child(2)::before {
+            background: #f9a8d4;
+        }
+
+        .text-box:nth-child(3)::before {
+            background: #6ee7b7;
+        }
+
+        .text-box:hover, .text-box.active {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            border-color: #c7d2fe;
+        }
+
+        .text-box label {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: #1e3a8a;
+            margin-bottom: 0.75rem;
+            display: block;
+        }
+
+        /* Matching label colors */
+        .text-box:nth-child(1) label {
+            color: #6366f1;
+        }
+
+        .text-box:nth-child(2) label {
+            color: #ec4899;
+        }
+
+        .text-box:nth-child(3) label {
+            color: #10b981;
+        }
+
+        .text-box textarea {
+            width: 100%;
+            height: 90px;
+            resize: none;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            padding: 0.75rem;
+            font-size: 0.95rem;
+            background: #f9fafb;
+            transition: all 0.3s ease;
+        }
+
+        .text-box textarea:focus {
+            outline: none;
+            border-color: #a5b4fc;
+            background: #ffffff;
+            box-shadow: 0 0 0 3px rgba(165, 180, 252, 0.1);
+        }
+
+        .text-box button {
+            width: 100%;
+            color: white;
+            border: none;
+            padding: 0.75rem;
+            border-radius: 6px;
+            font-weight: 500;
+            font-size: 1rem;
+            margin-top: 0.75rem;
+            transition: all 0.3s ease;
+        }
+
+        /* Matching button colors */
+        .text-box:nth-child(1) button {
+            background: linear-gradient(90deg, #a5b4fc, #c4b5fd);
+        }
+
+        .text-box:nth-child(2) button {
+            background: linear-gradient(90deg, #f9a8d4, #f3d7e8);
+        }
+
+        .text-box:nth-child(3) button {
+            background: linear-gradient(90deg, #6ee7b7, #a7f3d0);
+        }
+
+        .text-box:nth-child(1) button:hover {
+            background: linear-gradient(90deg, #818cf8, #a5b4fc);
+            box-shadow: 0 3px 10px rgba(165, 180, 252, 0.3);
+        }
+
+        .text-box:nth-child(2) button:hover {
+            background: linear-gradient(90deg, #ec4899, #f9a8d4);
+            box-shadow: 0 3px 10px rgba(249, 168, 212, 0.3);
+        }
+
+        .text-box:nth-child(3) button:hover {
+            background: linear-gradient(90deg, #10b981, #6ee7b7);
+            box-shadow: 0 3px 10px rgba(110, 231, 183, 0.3);
+        }
+
+        /* Right body part with a soft pastel design */
+        .right-body {
+            flex: 1;
+            padding: 2.5rem;
+            background: #ffffff;
+            border-radius: 16px;
+            margin: 0 1rem;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e0e7ff;
+            transition: all 0.5s ease;
+            position: relative;
+        }
+
+        .right-body.active {
+            background: #f8fafc;
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.08);
+            border-color: #a5b4fc;
+        }
+
+        #response-box {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-size: 1.1rem;
+            color: #1e40af;
+            min-height: 400px;
+            line-height: 1.6;
+        }
+
+        /* Take Action button with a pastel teal color */
+        .action-button {
+            position: absolute;
+            bottom: 2rem;
+            right: 2rem;
+            background: linear-gradient(90deg, #2dd4bf, #5eead4);
+            color: #1e3a8a;
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1rem;
+            box-shadow: 0 3px 10px rgba(45, 212, 191, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .action-button:hover {
+            background: linear-gradient(90deg, #14b8a6, #2dd4bf);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(45, 212, 191, 0.3);
+        }
+
+        /* Subtle animation for active state */
+        @keyframes glow {
+            0% {
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            }
+            50% {
+                box-shadow: 0 5px 25px rgba(0, 0, 0, 0.1);
+            }
+            100% {
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            }
+        }
+
+        .right-body.active {
+            animation: glow 2s infinite ease-in-out;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .main-container {
+                flex-direction: column;
+                padding: 1rem;
+            }
+
+            .left-sidebar {
+                width: 100%;
+                border-radius: 16px;
+                margin-bottom: 1rem;
+            }
+
+            .right-body {
+                margin: 0;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .action-button {
+                padding: 0.5rem 1.5rem;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Static Header -->
+    <div class="header">
+        <h1>Text Classification</h1>
+    </div>
+
+    <!-- Main layout -->
+    <div class="main-container">
+        <!-- Left Sidebar -->
+        <div class="left-sidebar">
+            <div class="text-box" onclick="activateBox('mail-message')">
+                <label>Mail Message</label>
+                <textarea id="mail-message" placeholder="Enter your mail message here..."></textarea>
+                <button onclick="processText('mail_message')">Process It</button>
+            </div>
+            <div class="text-box" onclick="activateBox('whatsapp-message')">
+                <label>What's Up Message</label>
+                <textarea id="whatsapp-message" placeholder="Enter your WhatsApp message here..."></textarea>
+                <button onclick="processText('whatsapp_message')">Process It</button>
+            </div>
+            <div class="text-box" onclick="activateBox('text-message')">
+                <label>Text Message</label>
+                <textarea id="text-message" placeholder="Enter your text message here..."></textarea>
+                <button onclick="processText('text_message')">Process It</button>
+            </div>
+        </div>
+
+        <!-- Right Body Part -->
+        <div class="right-body">
+            <div id="response-box">Classification result will appear here...</div>
+            <button class="action-button" onclick="takeAction()">Take Action</button>
+        </div>
+    </div>
+
+    <script>
+        // Activate a text box and highlight the right body part
+        function activateBox(textareaId) {
+            // Remove active class from all text boxes
+            document.querySelectorAll('.text-box').forEach(box => {
+                box.classList.remove('active');
+            });
+
+            // Add active class to the clicked text box
+            const selectedBox = document.querySelector(`#${textareaId}`).parentElement;
+            selectedBox.classList.add('active');
+
+            // Activate the right body part
+            const rightBody = document.querySelector('.right-body');
+            rightBody.classList.add('active');
+        }
+
+        async function processText(messageType) {
+            const textareaId = {
+                'mail_message': 'mail-message',
+                'whatsapp_message': 'whatsapp-message',
+                'text_message': 'text-message'
+            }[messageType];
+
+            const text = document.getElementById(textareaId).value.trim();
+            const responseBox = document.getElementById('response-box');
+            const rightBody = document.querySelector('.right-body');
+
+            if (!text) {
+                responseBox.textContent = 'Please enter a message to classify.';
+                rightBody.classList.add('active');
+                return;
+            }
+
+            responseBox.textContent = 'Processing...';
+            rightBody.classList.add('active');
+
+            try {
+                const response = await fetch('{% url "text_classification" %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({
+                        message_type: messageType,
+                        text: text
+                    })
+                });
+
+                const data = await response.json();
+                responseBox.textContent = data.response || 'No response received.';
+            } catch (error) {
+                console.error('Error:', error);
+                responseBox.textContent = 'Error processing the message. Please try again.';
+            }
+        }
+
+        function takeAction() {
+            const responseBox = document.getElementById('response-box');
+            const responseText = responseBox.textContent.trim();
+            
+            if (responseText === 'Classification result will appear here...' || responseText === 'Processing...' || responseText.startsWith('Error')) {
+                alert('Please process a message first.');
+                return;
+            }
+
+            alert('Action taken based on classification: ' + responseText);
+        }
+    </script>
+</body>
+</html>
