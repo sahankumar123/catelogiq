@@ -8,18 +8,44 @@
             padding: 0;
             font-family: Arial, sans-serif;
         }
-        h1 {
-            text-align: center;
-            margin: 20px 0;
-        }
         .iframe-container {
             width: 100%;
             height: 800px;
         }
+        .top-right-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+        .top-right-btn a {
+            padding: 10px 16px;
+            background-color: #007bff;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+        .top-right-btn a:hover {
+            background-color: #0056b3;
+        }
+        .header {
+            background-color: #f0f0f0;
+            padding: 20px 0;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
     </style>
 </head>
 <body>
-    <h1>Superset Dashboard</h1>
+    <div class="top-right-btn">
+        <a href="{% url 'analysis_options' %}">Back</a>
+    </div>
+
+    <div class="header">
+        Superset Dashboard
+    </div>
+
     {% if iframe_url %}
         <iframe
             class="iframe-container"
@@ -30,7 +56,7 @@
             allowfullscreen
         ></iframe>
     {% else %}
-        <p>Error: Dashboard URL not provided.</p>
+        <p style="text-align:center;">Error: Dashboard URL not provided.</p>
     {% endif %}
 </body>
 </html>
