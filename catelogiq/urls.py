@@ -28,4 +28,7 @@ urlpatterns = [
     path('about-us/', views.about_us, name='about_us'),
     path('contact/', views.contact, name='contact'),
     path('text-classification/', views.text_classification, name='text_classification'),
+    path('debug_session/', views.debug_session, name='debug_session'),
+    path('check_pipeline_status/', views.check_pipeline_status, name='check_pipeline_status'),
+    path('reset_pipeline_status/', views.reset_pipeline_status, name='reset_pipeline_status'),
 ]

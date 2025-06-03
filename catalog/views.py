@@ -3,32 +3,29 @@ from django.contrib import messages
 from django.core.cache import cache
 from .models import UploadedFile
 from django.conf import settings
-import hashlib
 import logging
-import time
 import json
-from io import StringIO
 import os
 import datetime
 from django.core.paginator import Paginator
-from django.core.cache import cache
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import to_date
 from django.http import JsonResponse, HttpResponse, HttpResponseServerError
-from django.views.decorators.csrf import csrf_exempt 
+from django.views.decorators.csrf import csrf_exempt
 from urllib.parse import urlencode
-# from databricks.sql import connect
 from databricks.connect import DatabricksSession
 from azure.storage.filedatalake import DataLakeServiceClient
 import requests
 import pandas as pd
+from django.utils import timezone  # Added for timezone-aware datetime
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-# Initialize a Boolean to track if a file has been uploaded in the current server session
+# Initialize global variables
 file_uploaded = False
+selected_file = None  # Track the selected file for analysis
 
 def check_file_uploaded():
     """Check if a file has been uploaded in the current session."""
@@ -39,50 +36,115 @@ def home(request):
     return render(request, 'home.html')
 
 def log_analytics(request):
-    global file_uploaded
+    global file_uploaded, selected_file
+    account_name = getattr(settings, 'AZURE_ACCOUNT_NAME', None)
+    account_key = getattr(settings, 'AZURE_ACCOUNT_KEY', None)
+    file_system = "bronze"
+    directory = "raw_log_files"
+    tracking_file_system = "rawfiles"
+    tracking_directory = "rawfiles"
+    tracking_file = "uploaded_files.txt"
+    new_file_uploaded = False
+    pipeline_completed = request.session.get('pipeline_completed', False)
+    logger.debug(f"[log_analytics] Session: pipeline_completed={pipeline_completed}, update_id={request.session.get('pipeline_update_id')}")
+
+    # Validate settings
+    if not account_name or not account_key:
+        logger.error("Azure account name or key not configured in settings.")
+        messages.error(request, "Storage configuration error. Please contact the administrator.")
+        return render(request, 'log_analytics.html', {'files': [], 'pipeline_completed': False, 'new_file_uploaded': new_file_uploaded})
+
+    # Initialize ADLS Gen2 client
+    try:
+        service_client = DataLakeServiceClient(
+            account_url=f"https://{account_name}.dfs.core.windows.net",
+            credential=account_key
+        )
+        file_system_client = service_client.get_file_system_client(file_system)
+        try:
+            directory_client = file_system_client.get_directory_client(directory)
+            directory_client.get_directory_properties()
+        except Exception as e:
+            logger.warning(f"Directory {directory} does not exist, creating it: {str(e)}")
+            directory_client = file_system_client.create_directory(directory)
+    except Exception as e:
+        logger.error(f"ADLS Gen2 connection failed: {str(e)}")
+        messages.error(request, f"Storage connection failed: {str(e)}")
+        return render(request, 'log_analytics.html', {'files': [], 'pipeline_completed': False, 'new_file_uploaded': new_file_uploaded})
+
+    # Get list of files from ADLS Gen2
+    file_list = []
+    try:
+        paths = file_system_client.get_paths(path=directory)
+        for path in paths:
+            if path.is_directory:
+                continue
+            file_list.append(path.name.split('/')[-1])
+        logger.debug(f"Retrieved {len(file_list)} files from ADLS: {file_list}")
+    except Exception as e:
+        logger.error(f"Failed to list files in ADLS: {str(e)}")
+        messages.error(request, f"Failed to list files: {str(e)}")
+        return render(request, 'log_analytics.html', {'files': [], 'selected_file': selected_file, 'pipeline_completed': False, 'new_file_uploaded': new_file_uploaded})
+
     if request.method == 'POST':
         if 'show_analysis' in request.POST:
-            # If "Show Analysis" button is clicked, check the file_uploaded Boolean
-            if check_file_uploaded():
-                return redirect('analysis_options')
-            else:
-                messages.error(request, "Please upload a file first.")
-                return render(request, 'log_analytics.html')
-        
-        uploaded_file = request.FILES.get('csv_file')
+            logger.debug(f"[show_analysis] file_uploaded={check_file_uploaded()}, pipeline_completed={pipeline_completed}")
+            try:
+                if check_file_uploaded() and pipeline_completed:
+                    logger.debug("Redirecting to analysis_options")
+                    return redirect('analysis_options')
+                else:
+                    if not check_file_uploaded():
+                        messages.error(request, "Please upload a file first.")
+                    elif not pipeline_completed:
+                        messages.info(request, "Data processing pipeline is still running. Please wait.")
+                    return render(request, 'log_analytics.html', {'files': file_list, 'selected_file': selected_file, 'pipeline_completed': pipeline_completed, 'new_file_uploaded': new_file_uploaded})
+            except Exception as e:
+                logger.error(f"Error processing show analysis: {str(e)}")
+                messages.error(request, f"Error processing request: {str(e)}")
+                return render(request, 'log_analytics.html', {'files': file_list, 'selected_file': selected_file, 'pipeline_completed': pipeline_completed, 'new_file_uploaded': new_file_uploaded})
 
+        if 'show_analysis_file' in request.POST:
+            try:
+                selected_file_name = request.POST.get('file_name')
+                if selected_file_name:
+                    selected_file = selected_file_name
+                    file_uploaded = True
+                    request.session['pipeline_completed'] = False
+                    request.session['pipeline_update_id'] = None
+                    request.session.modified = True
+                    logger.debug(f"Selected file: {selected_file_name}, file_uploaded=True")
+                    try:
+                        tracking_file_system_client = service_client.get_file_system_client(tracking_file_system)
+                        try:
+                            tracking_directory_client = tracking_file_system_client.get_directory_client(tracking_directory)
+                            tracking_directory_client.get_directory_properties()
+                        except:
+                            tracking_directory_client = tracking_file_system_client.create_directory(tracking_directory)
+                        tracking_client = tracking_directory_client.get_file_client(tracking_file)
+                        tracking_client.upload_data(data=selected_file_name.encode(), overwrite=True)
+                        logger.debug(f"Updated tracking file with: {selected_file_name}")
+                    except Exception as e:
+                        logger.warning(f"Failed to update tracking file: {str(e)}")
+                    return redirect('analysis_options')
+                else:
+                    messages.error(request, "No file selected for analysis.")
+                    return render(request, 'log_analytics.html', {'files': file_list, 'selected_file': selected_file, 'pipeline_completed': pipeline_completed, 'new_file_uploaded': new_file_uploaded})
+            except Exception as e:
+                logger.error(f"Error processing show analysis file: {str(e)}")
+                messages.error(request, f"Error processing file selection: {str(e)}")
+                return render(request, 'log_analytics.html', {'files': file_list, 'selected_file': selected_file, 'pipeline_completed': pipeline_completed, 'new_file_uploaded': new_file_uploaded})
+
+        uploaded_file = request.FILES.get('csv_file')
         if not uploaded_file:
             messages.error(request, "No file uploaded.")
-            return render(request, 'log_analytics.html')
+            return render(request, 'log_analytics.html', {'files': file_list, 'selected_file': selected_file, 'pipeline_completed': pipeline_completed, 'new_file_uploaded': new_file_uploaded})
 
         valid_extensions = ('.csv', '.log', '.txt')
         if not uploaded_file.name.lower().endswith(valid_extensions):
             messages.error(request, "Only CSV, log, or text files are allowed.")
-            return render(request, 'log_analytics.html')
+            return render(request, 'log_analytics.html', {'files': file_list, 'selected_file': selected_file, 'pipeline_completed': pipeline_completed, 'new_file_uploaded': new_file_uploaded})
 
-        account_name = settings.AZURE_ACCOUNT_NAME
-        account_key = settings.AZURE_ACCOUNT_KEY
-        file_system = settings.AZURE_FILE_SYSTEM
-        directory = "catalogiq"
-        tracking_file = "uploaded_files.txt"
-
-        try:
-            service_client = DataLakeServiceClient(
-                account_url=f"https://{account_name}.dfs.core.windows.net",
-                credential=account_key
-            )
-            file_system_client = service_client.get_file_system_client(file_system)
-            try:
-                directory_client = file_system_client.get_directory_client(directory)
-                directory_client.get_directory_properties()
-            except:
-                directory_client = file_system_client.create_directory(directory)
-        except Exception as e:
-            logger.error(f"ADLS Gen2 connection failed: {str(e)}")
-            messages.error(request, f"Storage connection failed: {str(e)}")
-            return render(request, 'log_analytics.html')
-
-        # Check if file already exists in ADLS Gen2
         file_exists = False
         try:
             existing_file_client = directory_client.get_file_client(uploaded_file.name)
@@ -92,26 +154,38 @@ def log_analytics(request):
             file_exists = False
 
         if file_exists:
-            # File already exists, update metadata and enable analysis
             messages.info(request, f"File '{uploaded_file.name}' already uploaded.")
             try:
                 uploaded_file_obj, created = UploadedFile.objects.get_or_create(filename=uploaded_file.name)
-                uploaded_file_obj.created_at = datetime.datetime.now()
+                uploaded_file_obj.created_at = timezone.now()
                 uploaded_file_obj.analyzed = False
                 uploaded_file_obj.output_path = None
                 uploaded_file_obj.save()
             except Exception as e:
                 logger.error(f"Failed to save metadata for existing file: {str(e)}")
 
-            # Set file_uploaded to True
             file_uploaded = True
-            logger.debug(f"Set file_uploaded to True for existing file {uploaded_file.name}")
-            return render(request, 'log_analytics.html')
+            selected_file = uploaded_file.name
+            request.session['pipeline_completed'] = False
+            request.session['pipeline_update_id'] = None
+            request.session.modified = True
+            try:
+                tracking_file_system_client = service_client.get_file_system_client(tracking_file_system)
+                try:
+                    tracking_directory_client = tracking_file_system_client.get_directory_client(tracking_directory)
+                    tracking_directory_client.get_directory_properties()
+                except:
+                    tracking_directory_client = tracking_file_system_client.create_directory(tracking_directory)
+                tracking_client = tracking_directory_client.get_file_client(tracking_file)
+                tracking_client.upload_data(data=uploaded_file.name.encode(), overwrite=True)
+                logger.debug(f"Updated tracking file with: {uploaded_file.name}")
+            except Exception as e:
+                logger.warning(f"Failed to update tracking file: {str(e)}")
+            return render(request, 'log_analytics.html', {'files': file_list, 'selected_file': selected_file, 'pipeline_completed': False, 'new_file_uploaded': new_file_uploaded})
 
         # Save file locally
         temp_path = os.path.join(settings.TEMP_DIR, uploaded_file.name)
         os.makedirs(os.path.dirname(temp_path), exist_ok=True)
-
         try:
             with open(temp_path, 'wb') as f:
                 for chunk in uploaded_file.chunks():
@@ -119,7 +193,7 @@ def log_analytics(request):
         except Exception as e:
             logger.error(f"Failed to save temp file: {str(e)}")
             messages.error(request, f"Temp file save failed: {str(e)}")
-            return render(request, 'log_analytics.html')
+            return render(request, 'log_analytics.html', {'files': file_list, 'selected_file': selected_file, 'pipeline_completed': pipeline_completed, 'new_file_uploaded': new_file_uploaded})
 
         # Upload new file to ADLS Gen2
         try:
@@ -131,49 +205,140 @@ def log_analytics(request):
         except Exception as e:
             logger.error(f"Upload to ADLS failed: {str(e)}")
             messages.error(request, f"Upload failed: {str(e)}")
-            return render(request, 'log_analytics.html')
+            return render(request, 'log_analytics.html', {'files': file_list, 'selected_file': selected_file, 'pipeline_completed': pipeline_completed, 'new_file_uploaded': new_file_uploaded})
 
         # Update uploaded_files.txt
         try:
-            tracking_client = directory_client.get_file_client(tracking_file)
+            tracking_file_system_client = service_client.get_file_system_client(tracking_file_system)
             try:
-                existing_content = tracking_client.download_file().readall().decode('utf-8')
+                tracking_directory_client = tracking_file_system_client.get_directory_client(tracking_directory)
+                tracking_directory_client.get_directory_properties()
             except:
-                existing_content = ""
-            new_content = existing_content + uploaded_file.name + "\n"
-            tracking_client.upload_data(data=new_content.encode(), overwrite=True)
+                tracking_directory_client = tracking_file_system_client.create_directory(tracking_directory)
+            tracking_client = tracking_directory_client.get_file_client(tracking_file)
+            tracking_client.upload_data(data=uploaded_file.name.encode(), overwrite=True)
+            logger.debug(f"Updated tracking file with: {uploaded_file.name}")
         except Exception as e:
             logger.warning(f"Failed to update tracking file: {str(e)}")
-            # Don't block upload on this
 
         # Update model
         try:
             uploaded_file_obj, created = UploadedFile.objects.get_or_create(filename=uploaded_file.name)
-            uploaded_file_obj.created_at = datetime.datetime.now()
+            uploaded_file_obj.created_at = timezone.now()
             uploaded_file_obj.analyzed = False
             uploaded_file_obj.output_path = None
             uploaded_file_obj.save()
         except Exception as e:
             logger.error(f"Failed to save metadata: {str(e)}")
 
-        # Set the file_uploaded Boolean to True
         file_uploaded = True
-        logger.debug(f"Set file_uploaded to True after uploading {uploaded_file.name}")
+        selected_file = uploaded_file.name
+        new_file_uploaded = True
+        request.session['pipeline_completed'] = False
+        request.session['pipeline_update_id'] = None
+        request.session.modified = True
+        logger.debug(f"Set file_uploaded=True after uploading {uploaded_file.name}")
+
+        # Trigger DLT pipeline
+        try:
+            pipeline_id = "d8441aad-ac3a-4e9a-871c-44b4a3f786a7"
+            endpoint_url = f"{settings.DATABRICKS_HOST}/api/2.0/pipelines/{pipeline_id}/updates"
+            headers = {
+                "Authorization": f"Bearer {settings.DATABRICKS_TOKEN}",
+                "Content-Type": "application/json"
+            }
+            payload = {}
+            response = requests.post(endpoint_url, headers=headers, json=payload, timeout=30)
+            logger.debug(f"DLT trigger response status: {response.status_code}, body: {response.text}")
+            if response.status_code == 200:
+                update_id = response.json().get('update_id')
+                if update_id:
+                    request.session['pipeline_update_id'] = update_id
+                    request.session.modified = True
+                    logger.debug(f"DLT pipeline triggered with update_id: {update_id}")
+                    messages.info(request, "File uploaded successfully. Processing pipeline started. Please wait.")
+                else:
+                    logger.error("No update_id returned")
+                    messages.error(request, "Failed to retrieve pipeline run ID.")
+            else:
+                logger.error(f"Failed to trigger DLT: {response.text}")
+                messages.error(request, "Failed to trigger pipeline.")
+        except Exception as e:
+            logger.error(f"Error triggering DLT: {str(e)}", exc_info=True)
+            messages.error(request, "Error triggering pipeline.")
 
         # Clean up
         if os.path.exists(temp_path):
             os.remove(temp_path)
 
-        messages.success(request, f"File '{uploaded_file.name}' uploaded successfully to ADLS Gen2!")
-        return redirect('log_analytics')
+        messages.success(request, f"File '{uploaded_file.name}' uploaded successfully!")
+        return render(request, 'log_analytics.html', {'files': file_list, 'selected_file': selected_file, 'pipeline_completed': False, 'new_file_uploaded': new_file_uploaded})
 
-    return render(request, 'log_analytics.html')
+    # Default return for GET requests
+    logger.debug("Rendering log_analytics.html for GET request")
+    return render(request, 'log_analytics.html', {'files': file_list, 'selected_file': selected_file, 'pipeline_completed': pipeline_completed, 'new_file_uploaded': new_file_uploaded})
+
+@csrf_exempt
+def check_pipeline_status(request):
+    if request.method == 'GET':
+        update_id = request.session.get('pipeline_update_id')
+        logger.debug(f"[check_pipeline_status] update_id={update_id}")
+        if not update_id:
+            return JsonResponse({'completed': False, 'status': 'No pipeline running'})
+
+        try:
+            pipeline_id = "d8441aad-ac3a-4e9a-871c-44b4a3f786a7"
+            endpoint_url = f"{settings.DATABRICKS_HOST}/api/2.0/pipelines/{pipeline_id}/updates/{update_id}"
+            headers = {
+                "Authorization": f"Bearer {settings.DATABRICKS_TOKEN}",
+                "Content-Type": "application/json"
+            }
+            response = requests.get(endpoint_url, headers=headers, timeout=10)
+            logger.debug(f"Pipeline status check response status: {response.status_code}, body: {response.text}")
+
+            if response.status_code == 200:
+                json_response = response.json()
+                status = json_response.get('update', {}).get('state', 'UNKNOWN')
+                logger.debug(f"Pipeline status: {status}")
+                if status in ['COMPLETED', 'SUCCESS']:
+                    request.session['pipeline_completed'] = True
+                    request.session.modified = True
+                    logger.debug("Set pipeline_completed=True")
+                    return JsonResponse({'completed': True, 'status': 'Pipeline completed successfully'})
+                elif status in ['FAILED', 'CANCELED']:
+                    request.session['pipeline_completed'] = False
+                    request.session.modified = True
+                    return JsonResponse({'completed': False, 'status': 'Pipeline failed or canceled'})
+                else:
+                    return JsonResponse({'completed': False, 'status': 'Pipeline still running'})
+            else:
+                logger.error(f"Failed to check pipeline status: {response.text}")
+                return JsonResponse({'completed': False, 'status': 'Error checking pipeline status'})
+        except Exception as e:
+            logger.error(f"Error checking pipeline status: {str(e)}", exc_info=True)
+            return JsonResponse({'completed': False, 'status': 'Error checking pipeline status'})
+
+    return JsonResponse({'error': 'Invalid request method'}, status=400)
+
+@csrf_exempt
+def reset_pipeline_status(request):
+    if request.method == 'POST':
+        try:
+            request.session['pipeline_completed'] = False
+            request.session['pipeline_update_id'] = None
+            request.session.modified = True
+            logger.debug("Pipeline status reset: pipeline_completed=False, pipeline_update_id=None")
+            return JsonResponse({'status': 'Pipeline status reset'})
+        except Exception as e:
+            logger.error(f"Error resetting pipeline status: {str(e)}")
+            return JsonResponse({'error': 'Failed to reset pipeline status'}, status=500)
+    return JsonResponse({'error': 'Invalid request method'}, status=400)
 
 def analysis_options(request):
     logger.debug("Rendering analysis_options.html")
     file_uploaded_status = check_file_uploaded()
     logger.debug(f"File uploaded status in analysis_options: {file_uploaded_status}")
-    return render(request, 'analysis_options.html', {'file_uploaded': file_uploaded_status})
+    return render(request, 'analysis_options.html', {'file_uploaded': file_uploaded_status, 'selected_file': selected_file})
 
 def anomaly_detection(request):
     logger.debug("Handling anomaly_detection request")
@@ -181,12 +346,10 @@ def anomaly_detection(request):
         messages.error(request, "Please upload a file first.")
         return redirect('log_analytics')
 
-    # Superset iframe URL
     superset_iframe_url = (
-        "https://579f-223-184-64-14.ngrok-free.app/superset/dashboard/6a36c303-a40b-41c2-a699-490dfd3f2073/?standalone=true"
+        "http://20.97.193.53:8088/superset/dashboard/a263b95e-754d-480f-b3d0-fa03e43cda33/?standalone=true"
     )
 
-    # Add any query parameters from the frontend request if needed
     params = request.GET.dict()
     if params:
         superset_iframe_url += "&" + urlencode(params)
@@ -194,7 +357,7 @@ def anomaly_detection(request):
     logger.debug(f"Rendering Superset iframe with URL: {superset_iframe_url}")
     
     try:
-        return render(request, 'anomaly_detection.html', {'iframe_url': superset_iframe_url})
+        return render(request, 'anomaly_detection.html', {'iframe_url': superset_iframe_url, 'selected_file': selected_file})
     except Exception as e:
         logger.error(f"Error rendering dashboard: {str(e)}")
         messages.error(request, "Failed to load the dashboard. Please try again later.")
@@ -206,10 +369,8 @@ def stream_viewer(request):
         messages.error(request, "Please upload a file first.")
         return redirect('log_analytics')
  
-    # Table configuration
     table_name = "text_log_analytics_catalog.silver_schema.silver_processed_logs"
  
-    # Pagination parameters
     page_size = 20
     page = request.GET.get('page', '1')
     try:
@@ -220,18 +381,15 @@ def stream_viewer(request):
         page = 1
 
     try:
-        # Connect to Databricks
         spark = DatabricksSession.builder.remote(
             host=settings.DATABRICKS_HOST,
             token=settings.DATABRICKS_TOKEN,
             cluster_id=settings.DATABRICKS_CLUSTER_ID
         ).getOrCreate()
 
-        # Read data from the catalog table
         df = spark.table(table_name).cache()
         logger.debug(f"Table {table_name} loaded and cached")
 
-        # Get all columns from the table
         available_columns = df.columns
         if not available_columns:
             logger.error(f"No columns found in table {table_name}")
@@ -241,14 +399,13 @@ def stream_viewer(request):
                 'columns': [],
                 'filter_values': {'level': []},
                 'pagination': {},
-                'current_filters': {}
+                'current_filters': {},
+                'selected_file': selected_file
             })
         logger.debug(f"Available columns: {available_columns}")
 
-        # Select all columns
         df = df.select(available_columns)
 
-        # Get unique level values for dropdown (cached), if 'level' or 'log_level' exists
         level_column = 'level' if 'level' in available_columns else 'log_level' if 'log_level' in available_columns else None
         cache_key_levels = f"stream_viewer_levels_{table_name}"
         level_values = cache.get(cache_key_levels)
@@ -261,12 +418,10 @@ def stream_viewer(request):
                 level_values = []
             logger.debug(f"Cached level values: {level_values}")
 
-        # Collect data (limited to reduce memory usage)
         data_rows = df.limit(1000).collect()
         data_list = [row.asDict() for row in data_rows]
         logger.debug(f"Collected {len(data_list)} rows from table {table_name}")
 
-        # Convert to pandas DataFrame for local filtering
         pandas_df = pd.DataFrame(data_list)
         if pandas_df.empty:
             logger.warning(f"No data collected from table {table_name}")
@@ -276,10 +431,10 @@ def stream_viewer(request):
                 'columns': available_columns,
                 'filter_values': {'level': level_values},
                 'pagination': {},
-                'current_filters': {}
+                'current_filters': {},
+                'selected_file': selected_file
             })
 
-        # Apply local filters
         filtered_df = pandas_df.copy()
         current_filters = {}
         level_filter = request.GET.get("level")
@@ -298,10 +453,8 @@ def stream_viewer(request):
             current_filters['message'] = message_filter
             logger.debug(f"Applied message filter: {message_filter}")
 
-        # Log filtered DataFrame size
         logger.debug(f"Filtered DataFrame size: {len(filtered_df)} rows")
 
-        # Pagination
         results = filtered_df.to_dict('records')
         total_records = len(results)
         paginator = Paginator(results, page_size)
@@ -313,7 +466,6 @@ def stream_viewer(request):
         results = page_obj.object_list
         logger.debug(f"Paginated results: {len(results)} records for page {page}")
 
-        # Pagination metadata
         total_pages = paginator.num_pages
         pagination = {
             'current_page': page_obj.number,
@@ -325,7 +477,6 @@ def stream_viewer(request):
             'total_records': total_records
         }
 
-        # Prepare filter values for template
         filter_values = {
             'level': level_values,
             'tag': [],
@@ -345,7 +496,8 @@ def stream_viewer(request):
             'columns': [],
             'filter_values': {'level': []},
             'pagination': {},
-            'current_filters': {}
+            'current_filters': {},
+            'selected_file': selected_file
         })
 
     return render(request, 'stream_viewer.html', {
@@ -353,9 +505,10 @@ def stream_viewer(request):
         'columns': available_columns,
         'filter_values': filter_values,
         'pagination': pagination,
-        'current_filters': current_filters
+        'current_filters': current_filters,
+        'selected_file': selected_file
     })
-    
+
 @csrf_exempt
 def chatbot(request):
     if request.method == 'POST':
@@ -367,7 +520,6 @@ def chatbot(request):
             if not query:
                 return JsonResponse({'response': 'Please provide a query.'}, status=400)
 
-            # Log token and headers for debugging
             logger.debug(f"Databricks Token: {settings.DATABRICKS_TOKEN}")
             endpoint_url = "https://adb-3623933893880845.5.azuredatabricks.net/serving-endpoints/LogIQ/invocations"
             headers = {
@@ -376,7 +528,6 @@ def chatbot(request):
             }
             logger.debug(f"Request Headers: {headers}")
 
-            # Construct payload in the required dataframe_split format
             payload = {
                 "dataframe_split": {
                     "columns": ["input", "tool_name"],
@@ -391,7 +542,6 @@ def chatbot(request):
 
             if response.status_code == 200:
                 result = response.json()
-                # Extract the output from the nested predictions structure
                 predictions = result.get('predictions', {}).get('predictions', [])
                 if predictions and isinstance(predictions, list) and len(predictions) > 0:
                     bot_response = predictions[0].get('output', 'Sorry, I could not process that.')
@@ -413,22 +563,18 @@ def chatbot(request):
         if not check_file_uploaded():
             messages.error(request, "Please upload a file first.")
             return redirect('log_analytics')
-    
-    return render(request, 'chatbot.html')
 
-NGROK_BASE = "https://5b65-223-184-64-14.ngrok-free.app/superset/dashboard/2751f42b-c289-4698-bde5-1c3994da9b1f/?standalone=true"  # your ngrok tunnel URL
+    return render(request, 'chatbot.html', {'selected_file': selected_file})
+
+NGROK_BASE = "https://5b65-223-184-64-14.ngrok-free.app/superset/dashboard/2751f42b-c289-4698-bde5-1c3994da9b1f/?standalone=true"
 
 def superset_proxy(request, path):
-    # Build the full URL
     url = f"{NGROK_BASE}/{path}"
-    # Forward headers, add ngrok skip header
     headers = {
         "ngrok-skip-browser-warning": "1",
         **{k: v for k, v in request.headers.items() if k not in ("Host",)},
     }
-    # Forward GET (you can extend for POST if needed)
     resp = requests.get(url, headers=headers, params=request.GET, stream=True)
-    # Build Django response
     django_resp = HttpResponse(
         resp.raw,
         status=resp.status_code,
@@ -436,45 +582,39 @@ def superset_proxy(request, path):
     )
     return django_resp
 
-
 def databricks_dashboard_proxy(request):
-    # Check if a file is uploaded (assuming check_file_uploaded is defined elsewhere)
     if not check_file_uploaded():
         messages.error(request, "Please upload a file first.")
         return redirect('log_analytics')
 
-    # Superset iframe URL
     superset_iframe_url = (
-        "https://579f-223-184-64-14.ngrok-free.app/superset/dashboard/6a36c303-a40b-41c2-a699-490dfd3f2073/?standalone=true"
+        "http://20.97.193.53:8088/superset/dashboard/050a6f23-c2c7-4840-a1ff-4c26a1674560/?standalone=true"
     )
 
-    # Add any query parameters from the frontend request if needed
     params = request.GET.dict()
     if params:
         superset_iframe_url += "&" + urlencode(params)
 
     logger.debug(f"Rendering Superset iframe with URL: {superset_iframe_url}")
-    
+
     try:
-        return render(request, 'dashboard.html', {'iframe_url': superset_iframe_url})
+        return render(request, 'dashboard.html', {'iframe_url': superset_iframe_url, 'selected_file': selected_file})
     except Exception as e:
         logger.error(f"Error rendering dashboard: {str(e)}")
         messages.error(request, "Failed to load the dashboard. Please try again later.")
         return redirect('log_analytics')
-        
+
 def about_us(request):
-    return render(request, 'about_us.html')
+    return render(request, 'about_us.html', {'selected_file': selected_file})
 
 def contact(request):
     if request.method == 'POST':
-        # Handle form submission
         name = request.POST.get('name')
         email = request.POST.get('email')
         message = request.POST.get('message')
-           # Add your logic to process the form (e.g., save to database, send email)
         messages.success(request, "Thank you for your message! We'll get back to you soon.")
         return redirect('contact')
-    return render(request, 'contact.html')
+    return render(request, 'contact.html', {'selected_file': selected_file})
 
 @csrf_exempt
 def text_classification(request):
@@ -484,14 +624,12 @@ def text_classification(request):
             data = json.loads(request.body)
             message_type = data.get('message_type', '')
             text = data.get('text', '')
-            subject = data.get('subject', None) # New: Get subject for email
+            subject = data.get('subject', None)
             logger.debug(f"Received text classification request: message_type={message_type}, text={text}, subject={subject}")
-            # Validation: if email, subject is also required
             if message_type == 'email' and (not text and not subject):
                 return JsonResponse({'response': 'Please provide both subject and message for email classification.'}, status=400)
-            elif not text and message_type != 'email': # For SMS/WhatsApp, only text is needed
+            elif not text and message_type != 'email':
                 return JsonResponse({'response': 'Please provide text to classify.'}, status=400)
-            # Log token and headers for debugging
             logger.debug(f"Databricks Token: {settings.DATABRICKS_TOKEN}")
             endpoint_url = "https://adb-3623933893880845.5.azuredatabricks.net/serving-endpoints/ChannelSort/invocations"
             headers = {
@@ -499,35 +637,31 @@ def text_classification(request):
                 "Content-Type": "application/json"
             }
             logger.debug(f"Request Headers: {headers}")
-            # Construct payload in the required dataframe_split format based on message_type
-            # We need to send 'null' for fields that are not applicable to the message type
-            # The order of columns and data values must match the Databricks endpoint's expectation.
-            # Based on your provided request example: ["source_type", "subject", "body", "priority", "message"]
             payload_columns = ["source_type", "subject", "body", "priority", "message"]
             payload_data = []
             if message_type == 'email':
                 payload_data.append([
                     message_type,
-                    subject if subject else "null", # Use actual subject or "null"
-                    text, # Assuming 'body' is the main message content for email
-                    "high", # Default priority, you might want to make this dynamic
-                    None # 'message' is null for email in your example
+                    subject if subject else "null",
+                    text,
+                    "high",
+                    None
                 ])
             elif message_type == 'sms':
                 payload_data.append([
                     message_type,
-                    None, # Subject is null for SMS
-                    None, # Body is null for SMS
-                    "high", # Default priority
-                    text # 'message' is the main content for SMS
+                    None,
+                    None,
+                    "high",
+                    text
                 ])
             elif message_type == 'whatsapp':
                 payload_data.append([
                     message_type,
-                    None, # Subject is null for WhatsApp
-                    None, # Body is null for WhatsApp
-                    "medium", # Default priority
-                    text # 'message' is the main content for WhatsApp
+                    None,
+                    None,
+                    "medium",
+                    text
                 ])
             payload = {
                 "dataframe_split": {
@@ -542,24 +676,17 @@ def text_classification(request):
             if response.status_code == 200:
                 result = response.json()
                 predictions = result.get('predictions', [])
-                bot_response = "Classification failed." # Default message
+                bot_response = "Classification failed."
                 if predictions and isinstance(predictions, list) and len(predictions) > 0:
-                    # Assuming we are interested in the first prediction for the single input
                     first_prediction = predictions[0]
                     source_type_out = first_prediction.get('source_type', 'N/A')
                     queue = first_prediction.get('queue', 'N/A')
-                    # Get the input message (original text sent) from the 'input' dictionary within the prediction
-                    # Adjusting based on the sample response structure: 'input' is a dictionary.
-                    # We need to decide which field from 'input' to display as 'Message'.
-                    # For email, it could be 'body' or 'message'. For SMS/WhatsApp, it's 'message'.
-                    # Let's try to get the 'message' field first, then 'body', then the original 'text' sent.
                     input_data = first_prediction.get('input', {})
                     display_message = input_data.get('message') or input_data.get('body') or text
-                    # Format the response as requested, including the subject if it was an email
-                    if source_type_out.lower() == 'email' and subject: # Check if subject was provided and it's an email
+                    if source_type_out.lower() == 'email' and subject:
                         bot_response = (
                             f"Source Type = {source_type_out}\n"
-                            f"Subject = {subject}\n" # Display the subject here
+                            f"Subject = {subject}\n"
                             f"Message = {display_message}\n"
                             f"Classified as = \"{queue}\""
                         )
@@ -582,4 +709,10 @@ def text_classification(request):
         except Exception as e:
             logger.error(f"Text classification error: {str(e)}", exc_info=True)
             return JsonResponse({'response': f"Error: {str(e)}"}, status=500)
-    return render(request, 'text_classification.html')
+    return render(request, 'text_classification.html', {'selected_file': selected_file})
+
+def debug_session(request):
+    return JsonResponse({
+        'pipeline_completed': request.session.get('pipeline_completed'),
+        'pipeline_update_id': request.session.get('pipeline_update_id')
+    })
