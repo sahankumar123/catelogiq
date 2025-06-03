@@ -305,7 +305,7 @@
 
     .card-2 {
       background: linear-gradient(135deg, #00bcd4, #007a99);
-      color: #1e272e;
+      color: white;
     }
 
     .card-body {
@@ -507,7 +507,7 @@
             </a>
             <ul class="dropdown-menu" aria-labelledby="featuresDropdown">
               <li class="dropdown-submenu">
-                <a class="dropdown-item" href="#" id="logAnalyticsToggle">Log Analytics</a>
+                <a class="dropdown-item" href="#" id="logAnalyticsToggle">Android Log Analytics</a>
                 <ul class="dropdown-menu" id="logAnalyticsSubmenu" style="display: none;">
                   <li>
                     <a class="dropdown-item" href="{% url 'stream_viewer' %}">Stream Viewer
@@ -531,7 +531,7 @@
                   </li>
                 </ul>
               </li>
-              <li><a class="dropdown-item" href="#">Text Categorization</a></li>
+              <li><a class="dropdown-item" href="{% url 'text_classification' %}">Text Categorization</a></li>
             </ul>
           </li>
           <li class="nav-item">
@@ -577,7 +577,7 @@
       <div class="col-md-6 animate_animated animate_slideInRight">
         <div class="card card-2">
           <div class="card-body">
-            <h3>Log Analytics</h3>
+            <h3>Android Log Analytics</h3>
             <p>Visualize and analyze logs to uncover actionable insights effortlessly.</p>
             <a href="{% url 'log_analytics' %}" class="btn btn-custom">Explore Now</a>
           </div>
@@ -599,7 +599,7 @@
           <ul class="list-unstyled">
             <li><a href="#">Home</a></li>
             <li><a href="#">Features</a></li>
-            <li><a href="{% url 'log_analytics' %}">Log Analytics</a></li>
+            <li><a href="{% url 'log_analytics' %}">Android Log Analytics</a></li>
             <li><a href="{% url 'contact' %}">Contact</a></li>
           </ul>
         </div>
