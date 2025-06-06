@@ -483,7 +483,117 @@
         transform: translateX(-50%);
       }
     }
-  </style>
+  
+/* Mobile: 320px–480px */
+@media (max-width: 480px) {
+  .hero h1 {
+    font-size: 2rem;
+  }
+  .hero p {
+    font-size: 1rem;
+  }
+  .hero .btn-custom {
+    font-size: 1rem;
+    padding: 12px 30px;
+  }
+  .card-body {
+    padding: 20px;
+  }
+  .section-title {
+    font-size: 1.5rem;
+  }
+  .navbar {
+    padding: 10px 15px;
+  }
+  .navbar-brand {
+    font-size: 1.5rem;
+  }
+  .nav-link {
+    font-size: 0.9rem;
+    padding: 8px 12px;
+  }
+  .dropdown-menu {
+    position: static;
+    float: none;
+    width: 100%;
+    box-shadow: none;
+  }
+  .dropdown-submenu .dropdown-menu {
+    position: static;
+    width: 100%;
+  }
+  .footer {
+    padding: 50px 20px 20px;
+    font-size: 1rem;
+  }
+  .newsletter-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .newsletter-form input,
+  .newsletter-form button {
+    width: 100%;
+  }
+}
+
+/* Tablet: 481px–768px */
+@media (min-width: 481px) and (max-width: 768px) {
+  .hero h1 {
+    font-size: 2.5rem;
+  }
+  .hero p {
+    font-size: 1.2rem;
+  }
+  .hero .btn-custom {
+    font-size: 1.1rem;
+    padding: 14px 40px;
+  }
+  .card-body {
+    padding: 30px;
+  }
+  .section-title {
+    font-size: 2rem;
+  }
+  .nav-link {
+    font-size: 1rem;
+    margin-right: 15px;
+  }
+  .footer {
+    font-size: 1rem;
+  }
+}
+
+/* Laptop: 769px–1024px */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .hero h1 {
+    font-size: 3.5rem;
+  }
+  .hero p {
+    font-size: 1.4rem;
+  }
+  .hero .btn-custom {
+    font-size: 1.2rem;
+    padding: 16px 45px;
+  }
+  .card-body {
+    padding: 40px;
+  }
+  .section-title {
+    font-size: 2.5rem;
+  }
+  .nav-link {
+    font-size: 1.05rem;
+    margin-right: 20px;
+  }
+  .footer {
+    font-size: 1.05rem;
+  }
+}
+
+/* Desktop: 1025px and above — default styling applies */
+
+</style>
 </head>
 <body>
 
@@ -531,7 +641,7 @@
                   </li>
                 </ul>
               </li>
-              <li><a class="dropdown-item" href="{% url 'text_classification' %}">Text Categorization</a></li>
+              <li><a class="dropdown-item" href="#">Text Categorization</a></li>
             </ul>
           </li>
           <li class="nav-item">
@@ -619,14 +729,14 @@
             <button type="submit">Subscribe</button>
           </form>
           <div class="social-icons mt-3">
-            <a href="#" target="_blank"><i class="fab fa-github"></i></a>
-            <a href="https://linkedin.com/in/your-profile" target="_blank"><i class="fab fa-linkedin"></i></a>
-            <a href="https://twitter.com/your-profile" target="_blank"><i class="fab fa-twitter"></i></a>
+            <a href="https://github.com/Quantumiai/" target="_blank"><i class="fab fa-github"></i></a>
+            <a href="https://www.linkedin.com/company/quantumi-ai" target="_blank"><i class="fab fa-linkedin"></i></a>
+            <a href="#" target="_blank"><i class="fab fa-twitter"></i></a>
           </div>
         </div>
       </div>
       <hr class="my-4" style="border-color: #feca57; opacity: 0.3;">
-      <p class="text-center mt-3">© 2025 CatelogIQ | Built with ❤ by <a href="#">YourName</a></p>
+      <p class="text-center mt-3">© 2025 CatelogIQ | Built with ❤ by <a href="#">Quantum-i.ai</a></p>
     </div>
   </footer>
 

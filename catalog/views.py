@@ -5,19 +5,17 @@ from .models import UploadedFile
 from django.conf import settings
 import logging
 import json
+from databricks.sql import connect
 import os
 import datetime
 from django.core.paginator import Paginator
-from pyspark.sql import SparkSession
-from pyspark.sql.functions import to_date
 from django.http import JsonResponse, HttpResponse, HttpResponseServerError
 from django.views.decorators.csrf import csrf_exempt
 from urllib.parse import urlencode
-from databricks.connect import DatabricksSession
 from azure.storage.filedatalake import DataLakeServiceClient
 import requests
 import pandas as pd
-from django.utils import timezone  # Added for timezone-aware datetime
+from django.utils import timezone
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -41,19 +39,16 @@ def log_analytics(request):
     account_key = getattr(settings, 'AZURE_ACCOUNT_KEY', None)
     file_system = "bronze"
     directory = "raw_log_files"
-    tracking_file_system = "rawfiles"
-    tracking_directory = "rawfiles"
-    tracking_file = "uploaded_files.txt"
     new_file_uploaded = False
     pipeline_completed = request.session.get('pipeline_completed', False)
     logger.debug(f"[log_analytics] Session: pipeline_completed={pipeline_completed}, update_id={request.session.get('pipeline_update_id')}")
-
+ 
     # Validate settings
     if not account_name or not account_key:
         logger.error("Azure account name or key not configured in settings.")
         messages.error(request, "Storage configuration error. Please contact the administrator.")
         return render(request, 'log_analytics.html', {'files': [], 'pipeline_completed': False, 'new_file_uploaded': new_file_uploaded})
-
+ 
     # Initialize ADLS Gen2 client
     try:
         service_client = DataLakeServiceClient(
@@ -71,7 +66,7 @@ def log_analytics(request):
         logger.error(f"ADLS Gen2 connection failed: {str(e)}")
         messages.error(request, f"Storage connection failed: {str(e)}")
         return render(request, 'log_analytics.html', {'files': [], 'pipeline_completed': False, 'new_file_uploaded': new_file_uploaded})
-
+ 
     # Get list of files from ADLS Gen2
     file_list = []
     try:
@@ -85,7 +80,27 @@ def log_analytics(request):
         logger.error(f"Failed to list files in ADLS: {str(e)}")
         messages.error(request, f"Failed to list files: {str(e)}")
         return render(request, 'log_analytics.html', {'files': [], 'selected_file': selected_file, 'pipeline_completed': False, 'new_file_uploaded': new_file_uploaded})
-
+ 
+    # Function to insert file metadata into Databricks table
+    def insert_file_to_databricks(file_name):
+        try:
+            with connect(
+                server_hostname=settings.DATABRICKS_HOST,
+                http_path=settings.DATABRICKS_HTTP_PATH,
+                access_token=settings.DATABRICKS_TOKEN
+            ) as conn:
+                cursor = conn.cursor()
+                query = """
+                    INSERT INTO text_log_analytics_catalog.bronze_schema.uploaded_files (file_name, uploaded_timestamp)
+                    VALUES (?, ?)
+                """
+                cursor.execute(query, (file_name, timezone.now()))
+                conn.commit()
+                logger.debug(f"Inserted file {file_name} into Databricks table")
+        except Exception as e:
+            logger.error(f"Failed to insert file {file_name} into Databricks table: {str(e)}")
+            messages.error(request, f"Failed to save file metadata to database: {str(e)}")
+ 
     if request.method == 'POST':
         if 'show_analysis' in request.POST:
             logger.debug(f"[show_analysis] file_uploaded={check_file_uploaded()}, pipeline_completed={pipeline_completed}")
@@ -103,7 +118,7 @@ def log_analytics(request):
                 logger.error(f"Error processing show analysis: {str(e)}")
                 messages.error(request, f"Error processing request: {str(e)}")
                 return render(request, 'log_analytics.html', {'files': file_list, 'selected_file': selected_file, 'pipeline_completed': pipeline_completed, 'new_file_uploaded': new_file_uploaded})
-
+ 
         if 'show_analysis_file' in request.POST:
             try:
                 selected_file_name = request.POST.get('file_name')
@@ -114,18 +129,7 @@ def log_analytics(request):
                     request.session['pipeline_update_id'] = None
                     request.session.modified = True
                     logger.debug(f"Selected file: {selected_file_name}, file_uploaded=True")
-                    try:
-                        tracking_file_system_client = service_client.get_file_system_client(tracking_file_system)
-                        try:
-                            tracking_directory_client = tracking_file_system_client.get_directory_client(tracking_directory)
-                            tracking_directory_client.get_directory_properties()
-                        except:
-                            tracking_directory_client = tracking_file_system_client.create_directory(tracking_directory)
-                        tracking_client = tracking_directory_client.get_file_client(tracking_file)
-                        tracking_client.upload_data(data=selected_file_name.encode(), overwrite=True)
-                        logger.debug(f"Updated tracking file with: {selected_file_name}")
-                    except Exception as e:
-                        logger.warning(f"Failed to update tracking file: {str(e)}")
+                    insert_file_to_databricks(selected_file_name)
                     return redirect('analysis_options')
                 else:
                     messages.error(request, "No file selected for analysis.")
@@ -134,17 +138,17 @@ def log_analytics(request):
                 logger.error(f"Error processing show analysis file: {str(e)}")
                 messages.error(request, f"Error processing file selection: {str(e)}")
                 return render(request, 'log_analytics.html', {'files': file_list, 'selected_file': selected_file, 'pipeline_completed': pipeline_completed, 'new_file_uploaded': new_file_uploaded})
-
+ 
         uploaded_file = request.FILES.get('csv_file')
         if not uploaded_file:
             messages.error(request, "No file uploaded.")
             return render(request, 'log_analytics.html', {'files': file_list, 'selected_file': selected_file, 'pipeline_completed': pipeline_completed, 'new_file_uploaded': new_file_uploaded})
-
+ 
         valid_extensions = ('.csv', '.log', '.txt')
         if not uploaded_file.name.lower().endswith(valid_extensions):
             messages.error(request, "Only CSV, log, or text files are allowed.")
             return render(request, 'log_analytics.html', {'files': file_list, 'selected_file': selected_file, 'pipeline_completed': pipeline_completed, 'new_file_uploaded': new_file_uploaded})
-
+ 
         file_exists = False
         try:
             existing_file_client = directory_client.get_file_client(uploaded_file.name)
@@ -152,7 +156,7 @@ def log_analytics(request):
             file_exists = True
         except:
             file_exists = False
-
+ 
         if file_exists:
             messages.info(request, f"File '{uploaded_file.name}' already uploaded.")
             try:
@@ -163,26 +167,15 @@ def log_analytics(request):
                 uploaded_file_obj.save()
             except Exception as e:
                 logger.error(f"Failed to save metadata for existing file: {str(e)}")
-
+ 
             file_uploaded = True
             selected_file = uploaded_file.name
             request.session['pipeline_completed'] = False
             request.session['pipeline_update_id'] = None
             request.session.modified = True
-            try:
-                tracking_file_system_client = service_client.get_file_system_client(tracking_file_system)
-                try:
-                    tracking_directory_client = tracking_file_system_client.get_directory_client(tracking_directory)
-                    tracking_directory_client.get_directory_properties()
-                except:
-                    tracking_directory_client = tracking_file_system_client.create_directory(tracking_directory)
-                tracking_client = tracking_directory_client.get_file_client(tracking_file)
-                tracking_client.upload_data(data=uploaded_file.name.encode(), overwrite=True)
-                logger.debug(f"Updated tracking file with: {uploaded_file.name}")
-            except Exception as e:
-                logger.warning(f"Failed to update tracking file: {str(e)}")
+            insert_file_to_databricks(uploaded_file.name)
             return render(request, 'log_analytics.html', {'files': file_list, 'selected_file': selected_file, 'pipeline_completed': False, 'new_file_uploaded': new_file_uploaded})
-
+ 
         # Save file locally
         temp_path = os.path.join(settings.TEMP_DIR, uploaded_file.name)
         os.makedirs(os.path.dirname(temp_path), exist_ok=True)
@@ -194,7 +187,7 @@ def log_analytics(request):
             logger.error(f"Failed to save temp file: {str(e)}")
             messages.error(request, f"Temp file save failed: {str(e)}")
             return render(request, 'log_analytics.html', {'files': file_list, 'selected_file': selected_file, 'pipeline_completed': pipeline_completed, 'new_file_uploaded': new_file_uploaded})
-
+ 
         # Upload new file to ADLS Gen2
         try:
             file_client = directory_client.create_file(uploaded_file.name)
@@ -206,21 +199,10 @@ def log_analytics(request):
             logger.error(f"Upload to ADLS failed: {str(e)}")
             messages.error(request, f"Upload failed: {str(e)}")
             return render(request, 'log_analytics.html', {'files': file_list, 'selected_file': selected_file, 'pipeline_completed': pipeline_completed, 'new_file_uploaded': new_file_uploaded})
-
-        # Update uploaded_files.txt
-        try:
-            tracking_file_system_client = service_client.get_file_system_client(tracking_file_system)
-            try:
-                tracking_directory_client = tracking_file_system_client.get_directory_client(tracking_directory)
-                tracking_directory_client.get_directory_properties()
-            except:
-                tracking_directory_client = tracking_file_system_client.create_directory(tracking_directory)
-            tracking_client = tracking_directory_client.get_file_client(tracking_file)
-            tracking_client.upload_data(data=uploaded_file.name.encode(), overwrite=True)
-            logger.debug(f"Updated tracking file with: {uploaded_file.name}")
-        except Exception as e:
-            logger.warning(f"Failed to update tracking file: {str(e)}")
-
+ 
+        # Insert into Databricks table
+        insert_file_to_databricks(uploaded_file.name)
+ 
         # Update model
         try:
             uploaded_file_obj, created = UploadedFile.objects.get_or_create(filename=uploaded_file.name)
@@ -230,7 +212,7 @@ def log_analytics(request):
             uploaded_file_obj.save()
         except Exception as e:
             logger.error(f"Failed to save metadata: {str(e)}")
-
+ 
         file_uploaded = True
         selected_file = uploaded_file.name
         new_file_uploaded = True
@@ -238,7 +220,7 @@ def log_analytics(request):
         request.session['pipeline_update_id'] = None
         request.session.modified = True
         logger.debug(f"Set file_uploaded=True after uploading {uploaded_file.name}")
-
+ 
         # Trigger DLT pipeline
         try:
             pipeline_id = "d8441aad-ac3a-4e9a-871c-44b4a3f786a7"
@@ -266,18 +248,18 @@ def log_analytics(request):
         except Exception as e:
             logger.error(f"Error triggering DLT: {str(e)}", exc_info=True)
             messages.error(request, "Error triggering pipeline.")
-
+ 
         # Clean up
         if os.path.exists(temp_path):
             os.remove(temp_path)
-
+ 
         messages.success(request, f"File '{uploaded_file.name}' uploaded successfully!")
         return render(request, 'log_analytics.html', {'files': file_list, 'selected_file': selected_file, 'pipeline_completed': False, 'new_file_uploaded': new_file_uploaded})
-
+ 
     # Default return for GET requests
     logger.debug("Rendering log_analytics.html for GET request")
     return render(request, 'log_analytics.html', {'files': file_list, 'selected_file': selected_file, 'pipeline_completed': pipeline_completed, 'new_file_uploaded': new_file_uploaded})
-
+ 
 @csrf_exempt
 def check_pipeline_status(request):
     if request.method == 'GET':
@@ -369,8 +351,7 @@ def stream_viewer(request):
         messages.error(request, "Please upload a file first.")
         return redirect('log_analytics')
  
-    table_name = "text_log_analytics_catalog.silver_schema.silver_processed_logs"
- 
+    table_name = "text_log_analytics_catalog.silver_schema.processed_logs"
     page_size = 20
     page = request.GET.get('page', '1')
     try:
@@ -381,113 +362,137 @@ def stream_viewer(request):
         page = 1
 
     try:
-        spark = DatabricksSession.builder.remote(
-            host=settings.DATABRICKS_HOST,
-            token=settings.DATABRICKS_TOKEN,
-            cluster_id=settings.DATABRICKS_CLUSTER_ID
-        ).getOrCreate()
+        # Connect to Databricks SQL warehouse
+        with connect(
+            server_hostname=settings.DATABRICKS_HOST,
+            http_path=settings.DATABRICKS_HTTP_PATH,
+            access_token=settings.DATABRICKS_TOKEN
+        ) as conn:
+            cursor = conn.cursor()
+            
+            # Get column names
+            cursor.execute(f"DESCRIBE TABLE {table_name}")
+            columns = [row[0] for row in cursor.fetchall()]
+            logger.debug(f"Available columns: {columns}")
 
-        df = spark.table(table_name).cache()
-        logger.debug(f"Table {table_name} loaded and cached")
+            if not columns:
+                logger.error(f"No columns found in table {table_name}")
+                messages.error(request, "No columns found in data.")
+                return render(request, 'stream_viewer.html', {
+                    'results': [],
+                    'columns': [],
+                    'filter_values': {'level': []},
+                    'pagination': {},
+                    'current_filters': {},
+                    'selected_file': selected_file
+                })
 
-        available_columns = df.columns
-        if not available_columns:
-            logger.error(f"No columns found in table {table_name}")
-            messages.error(request, "No columns found in data.")
-            return render(request, 'stream_viewer.html', {
-                'results': [],
-                'columns': [],
-                'filter_values': {'level': []},
-                'pagination': {},
-                'current_filters': {},
-                'selected_file': selected_file
-            })
-        logger.debug(f"Available columns: {available_columns}")
-
-        df = df.select(available_columns)
-
-        level_column = 'level' if 'level' in available_columns else 'log_level' if 'log_level' in available_columns else None
-        cache_key_levels = f"stream_viewer_levels_{table_name}"
-        level_values = cache.get(cache_key_levels)
-        if not level_values:
-            if level_column:
-                level_values = df.select(level_column).distinct().dropna().limit(100).collect()
-                level_values = sorted([row[level_column] for row in level_values if row[level_column] is not None])
+            # Get distinct level values for filtering
+            level_column = 'level' if 'level' in columns else 'log_level' if 'log_level' in columns else None
+            cache_key_levels = f"stream_viewer_levels_{table_name}"
+            level_values = cache.get(cache_key_levels)
+            if not level_values and level_column:
+                cursor.execute(f"SELECT DISTINCT {level_column} FROM {table_name} WHERE {level_column} IS NOT NULL LIMIT 100")
+                level_values = sorted([row[0] for row in cursor.fetchall() if row[0] is not None])
                 cache.set(cache_key_levels, level_values, timeout=3600)
+                logger.debug(f"Cached level values: {level_values}")
             else:
                 level_values = []
-            logger.debug(f"Cached level values: {level_values}")
 
-        data_rows = df.limit(1000).collect()
-        data_list = [row.asDict() for row in data_rows]
-        logger.debug(f"Collected {len(data_list)} rows from table {table_name}")
+            # Build the base query
+            query = f"SELECT * FROM {table_name}"
+            conditions = []
+            params = []
+            current_filters = {}
 
-        pandas_df = pd.DataFrame(data_list)
-        if pandas_df.empty:
-            logger.warning(f"No data collected from table {table_name}")
-            messages.info(request, "No data available to display.")
+            # Apply filters
+            level_filter = request.GET.get("level")
+            if level_filter and level_column and level_filter in level_values:
+                conditions.append(f"{level_column} = ?")
+                params.append(level_filter)
+                current_filters['level'] = level_filter
+                logger.debug(f"Applied level filter: {level_filter}")
+
+            tag_filter = request.GET.get("tag")
+            if tag_filter and 'tag' in columns:
+                conditions.append("tag LIKE ?")
+                params.append(f"%{tag_filter}%")
+                current_filters['tag'] = tag_filter
+                logger.debug(f"Applied tag filter: {tag_filter}")
+
+            message_filter = request.GET.get("message")
+            if message_filter and 'message' in columns:
+                conditions.append("message LIKE ?")
+                params.append(f"%{message_filter}%")
+                current_filters['message'] = message_filter
+                logger.debug(f"Applied message filter: {message_filter}")
+
+            if conditions:
+                query += " WHERE " + " AND ".join(conditions)
+
+            # Execute query with limit
+            query += " LIMIT 1000"
+            cursor.execute(query, params)
+            rows = cursor.fetchall()
+            data_list = [dict(zip(columns, row)) for row in rows]
+            logger.debug(f"Collected {len(data_list)} rows from table {table_name}")
+
+            # Convert to pandas DataFrame
+            pandas_df = pd.DataFrame(data_list)
+            if pandas_df.empty:
+                logger.warning(f"No data collected from table {table_name}")
+                messages.info(request, "No data available to display.")
+                return render(request, 'stream_viewer.html', {
+                    'results': [],
+                    'columns': columns,
+                    'filter_values': {'level': level_values},
+                    'pagination': {},
+                    'current_filters': {},
+                    'selected_file': selected_file
+                })
+
+            # Pagination
+            total_records = len(pandas_df)
+            paginator = Paginator(pandas_df.to_dict('records'), page_size)
+            try:
+                page_obj = paginator.page(page)
+            except:
+                page_obj = paginator.page(1)
+                page = 1
+            results = page_obj.object_list
+            logger.debug(f"Paginated results: {len(results)} records for page {page}")
+
+            total_pages = paginator.num_pages
+            pagination = {
+                'current_page': page_obj.number,
+                'has_previous': page_obj.has_previous(),
+                'has_next': page_obj.has_next(),
+                'previous_page': page_obj.previous_page_number() if page_obj.has_previous() else None,
+                'next_page': page_obj.next_page_number() if page_obj.has_next() else None,
+                'total_pages': total_pages,
+                'total_records': total_records
+            }
+
+            filter_values = {
+                'level': level_values,
+                'tag': [],
+                'message': []
+            }
+
+            if not results and any(current_filters.values()):
+                messages.info(request, "No records match the selected filters.")
+                logger.debug("No records match the applied filters")
+
+            logger.debug(f"Rendering stream_viewer with {len(results)} records, page {page}")
             return render(request, 'stream_viewer.html', {
-                'results': [],
-                'columns': available_columns,
-                'filter_values': {'level': level_values},
-                'pagination': {},
-                'current_filters': {},
+                'results': results,
+                'columns': columns,
+                'filter_values': filter_values,
+                'pagination': pagination,
+                'current_filters': current_filters,
                 'selected_file': selected_file
             })
 
-        filtered_df = pandas_df.copy()
-        current_filters = {}
-        level_filter = request.GET.get("level")
-        if level_filter and level_column and level_filter in level_values:
-            filtered_df = filtered_df[filtered_df[level_column] == level_filter]
-            current_filters['level'] = level_filter
-            logger.debug(f"Applied level filter: {level_filter}")
-        tag_filter = request.GET.get("tag")
-        if tag_filter and 'tag' in available_columns:
-            filtered_df = filtered_df[filtered_df['tag'].str.contains(tag_filter, case=False, na=False)]
-            current_filters['tag'] = tag_filter
-            logger.debug(f"Applied tag filter: {tag_filter}")
-        message_filter = request.GET.get("message")
-        if message_filter and 'message' in available_columns:
-            filtered_df = filtered_df[filtered_df['message'].str.contains(message_filter, case=False, na=False)]
-            current_filters['message'] = message_filter
-            logger.debug(f"Applied message filter: {message_filter}")
-
-        logger.debug(f"Filtered DataFrame size: {len(filtered_df)} rows")
-
-        results = filtered_df.to_dict('records')
-        total_records = len(results)
-        paginator = Paginator(results, page_size)
-        try:
-            page_obj = paginator.page(page)
-        except:
-            page_obj = paginator.page(1)
-            page = 1
-        results = page_obj.object_list
-        logger.debug(f"Paginated results: {len(results)} records for page {page}")
-
-        total_pages = paginator.num_pages
-        pagination = {
-            'current_page': page_obj.number,
-            'has_previous': page_obj.has_previous(),
-            'has_next': page_obj.has_next(),
-            'previous_page': page_obj.previous_page_number() if page_obj.has_previous() else None,
-            'next_page': page_obj.next_page_number() if page_obj.has_next() else None,
-            'total_pages': total_pages,
-            'total_records': total_records
-        }
-
-        filter_values = {
-            'level': level_values,
-            'tag': [],
-            'message': []
-        }
-
-        if not results and any(current_filters.values()):
-            messages.info(request, "No records match the selected filters.")
-            logger.debug("No records match the applied filters")
-
-        logger.debug(f"Rendering stream_viewer with {len(results)} records, page {page}")
     except Exception as e:
         logger.error(f"Failed to query table {table_name}: {str(e)}", exc_info=True)
         messages.error(request, f"Failed to load stream data: {str(e)}")
@@ -499,15 +504,6 @@ def stream_viewer(request):
             'current_filters': {},
             'selected_file': selected_file
         })
-
-    return render(request, 'stream_viewer.html', {
-        'results': results,
-        'columns': available_columns,
-        'filter_values': filter_values,
-        'pagination': pagination,
-        'current_filters': current_filters,
-        'selected_file': selected_file
-    })
 
 @csrf_exempt
 def chatbot(request):
@@ -701,7 +697,7 @@ def text_classification(request):
             else:
                 logger.error(f"Databricks endpoint error: {response.text}")
                 try:
-                    error_message = response.json().get('message', 'Unknown error from service.')
+                    error_message = response.json().get('message', 'Unknown error')
                 except json.JSONDecodeError:
                     error_message = response.text
                 bot_response = f"Error from service: {error_message}"

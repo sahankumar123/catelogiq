@@ -2,6 +2,7 @@
 <html>
 <head>
     <title>Superset Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <style>
         body {
             margin: 0;
@@ -34,6 +35,63 @@
             font-size: 24px;
             font-weight: bold;
             color: #333;
+        }
+         @media (max-width: 480px) {
+            .header {
+                font-size: 18px;
+                padding: 15px 0;
+            }
+
+            .top-right-btn {
+                top: 10px;
+                right: 10px;
+            }
+
+            .top-right-btn a {
+                padding: 6px 10px;
+                font-size: 0.8rem;
+            }
+
+            .iframe-container {
+                height: 350px;
+            }
+        }
+
+        @media (min-width: 481px) and (max-width: 768px) {
+            .header {
+                font-size: 20px;
+            }
+
+            .top-right-btn {
+                top: 15px;
+                right: 15px;
+            }
+
+            .top-right-btn a {
+                padding: 8px 14px;
+                font-size: 0.85rem;
+            }
+
+            .iframe-container {
+                height: 500px;
+            }
+        }
+
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .top-right-btn a {
+                font-size: 0.9rem;
+                padding: 10px 16px;
+            }
+
+            .iframe-container {
+                height: 650px;
+            }
+        }
+
+        @media (min-width: 1025px) {
+            .iframe-container {
+                height: 800px;
+            }
         }
     </style>
 </head>

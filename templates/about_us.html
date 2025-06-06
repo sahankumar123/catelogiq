@@ -322,7 +322,99 @@
         margin-top: 5px;
       }
     }
-  </style>
+  
+/* Mobile: 320px–480px */
+@media (max-width: 480px) {
+  .about-hero h1 {
+    font-size: 2rem;
+  }
+  .about-hero p {
+    font-size: 1rem;
+  }
+  .section-title {
+    font-size: 1.5rem;
+  }
+  .about-content {
+    padding: 40px 15px;
+  }
+  .about-content p {
+    font-size: 1rem;
+  }
+  .navbar {
+    padding: 10px 15px;
+  }
+  .navbar-brand {
+    font-size: 1.5rem;
+  }
+  .nav-link {
+    font-size: 0.9rem;
+    padding: 8px 12px;
+  }
+  .footer {
+    padding: 40px 20px 20px;
+    font-size: 1rem;
+  }
+  .newsletter-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .newsletter-form input,
+  .newsletter-form button {
+    width: 100%;
+  }
+}
+
+/* Tablet: 481px–768px */
+@media (min-width: 481px) and (max-width: 768px) {
+  .about-hero h1 {
+    font-size: 2.5rem;
+  }
+  .about-hero p {
+    font-size: 1.2rem;
+  }
+  .section-title {
+    font-size: 2rem;
+  }
+  .about-content {
+    padding: 60px 20px;
+  }
+  .navbar {
+    padding: 12px 20px;
+  }
+  .nav-link {
+    font-size: 1rem;
+  }
+  .footer {
+    font-size: 1rem;
+  }
+}
+
+/* Laptop: 769px–1024px */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .about-hero h1 {
+    font-size: 3rem;
+  }
+  .about-hero p {
+    font-size: 1.3rem;
+  }
+  .section-title {
+    font-size: 2.3rem;
+  }
+  .about-content {
+    padding: 70px 30px;
+  }
+  .nav-link {
+    font-size: 1.05rem;
+  }
+  .footer {
+    font-size: 1.05rem;
+  }
+}
+
+/* Desktop: 1025px and above — default styling applies */
+
+</style>
 </head>
 <body>
 
@@ -346,7 +438,7 @@
             </a>
             <ul class="dropdown-menu" aria-labelledby="featuresDropdown">
               <li class="dropdown-submenu">
-                <a class="dropdown-item" href="#" id="logAnalyticsToggle">Log Analytics</a>
+                <a class="dropdown-item" href="#" id="logAnalyticsToggle">Android Log Analytics</a>
                 <ul class="dropdown-menu" id="logAnalyticsSubmenu" style="display: none;">
                   <li>
                     <a class="dropdown-item" href="{% url 'stream_viewer' %}">Stream Viewer</a>
@@ -386,7 +478,7 @@
   <!-- About Content -->
   <div class="about-content">
     <h2 class="section-title">Who We Are</h2>
-    <p>CatelogIQ is a pioneering technology company dedicated to transforming how businesses interact with their data. Founded by a team of passionate data scientists and engineers, we specialize in AI-driven solutions for log analytics and text categorization.</p>
+    <p>CatelogIQ is a pioneering technology company dedicated to transforming how businesses interact with their data. Founded by a team of passionate data scientists and engineers, we specialize in AI-driven solutions for android log analytics and text categorization.</p>
     <p>Our mission is to empower organizations to unlock the full potential of their data through intuitive, scalable, and intelligent tools. Whether it’s detecting anomalies in real-time logs or categorizing vast amounts of unstructured text, CatelogIQ delivers actionable insights that drive success.</p>
     <h2 class="section-title">Our Vision</h2>
     <p>We envision a world where every organization, regardless of size, can harness the power of AI to make informed decisions. By combining cutting-edge machine learning with user-friendly interfaces, we aim to democratize data analytics and make it accessible to all.</p>
@@ -405,7 +497,7 @@
           <ul class="list-unstyled">
             <li><a href="{% url 'home' %}">Home</a></li>
             <li><a href="#">Features</a></li>
-            <li><a href="{% url 'log_analytics' %}">Log Analytics</a></li>
+            <li><a href="{% url 'log_analytics' %}">Android Log Analytics</a></li>
             <li><a href="{% url 'contact' %}">Contact</a></li>
           </ul>
         </div>
@@ -425,14 +517,14 @@
             <button type="submit">Subscribe</button>
           </form>
           <div class="social-icons mt-3">
-            <a href="#" target="_blank"><i class="fab fa-github"></i></a>
-            <a href="https://linkedin.com/in/your-profile" target="_blank"><i class="fab fa-linkedin"></i></a>
+            <a href="https://github.com/Quantumiai/" target="_blank"><i class="fab fa-github"></i></a>
+            <a href="https://www.linkedin.com/company/quantumi-ai" target="_blank"><i class="fab fa-linkedin"></i></a>
             <a href="https://twitter.com/your-profile" target="_blank"><i class="fab fa-twitter"></i></a>
           </div>
         </div>
       </div>
       <hr class="my-4" style="border-color: #feca57; opacity: 0.3;">
-      <p class="text-center mt-3">© 2025 CatelogIQ | Built with ❤ by <a href="#">YourName</a></p>
+      <p class="text-center mt-3">© 2025 CatelogIQ | Built with ❤ by <a href="#">Quantum-i.ai</a></p>
     </div>
   </footer>
 

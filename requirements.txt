@@ -7,6 +7,7 @@ certifi==2025.4.26
 cffi==1.17.1
 charset-normalizer==3.4.2
 cryptography==45.0.2
+databricks==0.2
 databricks-connect==16.4.0
 databricks-sdk==0.53.0
 Django==5.2.1
@@ -14,6 +15,7 @@ google-auth==2.40.1
 googleapis-common-protos==1.70.0
 grpcio==1.71.0
 grpcio-status==1.71.0
+gunicorn==23.0.0
 idna==3.10
 isodate==0.7.2
 numpy==1.26.4
@@ -25,6 +27,7 @@ pyarrow==20.0.0
 pyasn1==0.6.1
 pyasn1_modules==0.4.2
 pycparser==2.22
+pyspark==4.0.0
 python-dateutil==2.9.0.post0
 python-decouple==3.8
 python-dotenv==1.1.0
