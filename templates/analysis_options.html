@@ -187,6 +187,63 @@
         background: linear-gradient(90deg, #f97316, #d97706);
       }
  
+      /* Back Button Styling */
+      .back-btn {
+        background: linear-gradient(90deg, #d946ef, #a21caf);
+        color: white;
+        padding: 0.6rem 1.5rem;
+        border-radius: 50px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        overflow: hidden;
+        display: inline-block;
+        text-decoration: none;
+        z-index: 10;
+      }
+ 
+      .back-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+        animation: neonGlowBack 1.5s infinite;
+      }
+ 
+      @keyframes neonGlowBack {
+        0% {
+          box-shadow: 0 0 10px #6b7280, 0 0 20px #4b5563, 0 0 30px #6b7280;
+        }
+        50% {
+          box-shadow: 0 0 20px #4b5563, 0 0 30px #6b7280, 0 0 40px #4b5563;
+        }
+        100% {
+          box-shadow: 0 0 10px #6b7280, 0 0 20px #4b5563, 0 0 30px #6b7280;
+        }
+      }
+ 
+      .back-btn::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        transition: width 0.5s ease, height 0.5s ease;
+      }
+ 
+      .back-btn:hover::after {
+        width: 150px;
+        height: 150px;
+      }
+ 
       /* Explore Analysis Tools */
       .explore-tools {
         font-size: 1.5rem;
@@ -228,48 +285,123 @@
       }
  
       /* Responsive Design */
-      @media (max-width: 768px) {
-        .header {
-          font-size: 1.8rem;
-          padding: 1rem 0;
-        }
- 
-        .explore-tools {
-          font-size: 1.2rem;
-          margin: 0.75rem 0 0.75rem;
-        }
- 
-        .file-info {
-          font-size: 1rem;
-        }
- 
-        .feature-bubble {
-          padding: 1rem;
-          margin: 0.5rem;
-          max-width: 100%;
-        }
- 
-        .feature-bubble h3 {
-          font-size: 1.2rem;
-        }
- 
-        .feature-bubble p {
-          font-size: 0.8rem;
-        }
- 
-        .feature-bubble .btn {
-          padding: 0.5rem 1.2rem;
-          font-size: 0.85rem;
-        }
+      @media (max-width: 480px) {
+      .header {
+        font-size: 1.6rem;
+        padding: 1rem 0;
       }
+
+      .file-info {
+        font-size: 1rem;
+        margin-bottom: 1rem;
+      }
+
+      .explore-tools {
+        font-size: 1.1rem;
+        margin: 0.5rem 0 1rem;
+      }
+
+      .feature-bubble {
+        padding: 1rem;
+        margin: 0.5rem 0;
+        max-width: 100%;
+      }
+
+      .feature-bubble h3 {
+        font-size: 1.1rem;
+      }
+
+      .feature-bubble p {
+        font-size: 0.8rem;
+      }
+
+      .feature-bubble .btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.8rem;
+      }
+
+      .back-btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.8rem;
+      }
+
+      .alert {
+        margin: 0.5rem 1rem;
+        font-size: 0.85rem;
+      }
+    }
+
+    @media (min-width: 481px) and (max-width: 768px) {
+      .header {
+        font-size: 1.8rem;
+        padding: 1.2rem 0;
+      }
+
+      .file-info {
+        font-size: 1.1rem;
+        margin-bottom: 1.25rem;
+      }
+
+      .explore-tools {
+        font-size: 1.3rem;
+        margin: 0.75rem 0;
+      }
+
+      .feature-bubble {
+        padding: 1.2rem;
+        margin: 0.75rem;
+        max-width: 100%;
+      }
+
+      .feature-bubble h3 {
+        font-size: 1.3rem;
+      }
+
+      .feature-bubble p {
+        font-size: 0.85rem;
+      }
+
+      .feature-bubble .btn {
+        padding: 0.55rem 1.3rem;
+        font-size: 0.85rem;
+      }
+
+      .back-btn {
+        padding: 0.55rem 1.3rem;
+        font-size: 0.85rem;
+      }
+    }
+
+    @media (min-width: 769px) and (max-width: 1024px) {
+      .header {
+        font-size: 2rem;
+      }
+
+      .feature-bubble {
+        max-width: 45%;
+      }
+
+      .feature-bubble .btn {
+        padding: 0.6rem 1.5rem;
+        font-size: 0.9rem;
+      }
+
+      .back-btn {
+        padding: 0.6rem 1.5rem;
+        font-size: 0.9rem;
+      }
+    }
     </style>
   </head>
   <body>
     <!-- Particle.js Background -->
     <div id="particles-js"></div>
  
-    <h1 class="header">CatelogIQ - Analysis Options</h1>
-    <div class="container mx-auto mt-4 px-4">
+    <div class="container mx-auto px-4">
+      <div class="flex justify-start mt-4">
+        <a href="{% url 'log_analytics' %}" class="back-btn">Back</a>
+      </div>
+      <h1 class="header">CatelogIQ - Analysis Options</h1>
       {% if selected_file %}
         <div class="file-info">Currently processing file: <strong>{{ selected_file }}</strong></div>
       {% else %}
@@ -371,4 +503,3 @@
     </script>
   </body>
 </html>
- 

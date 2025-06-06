@@ -30,6 +30,41 @@
             font-weight: bold;
             color: #333;
         }
+        @media (max-width: 480px) {
+        .top-right-btn {
+            top: 10px;
+            right: 10px;
+        }
+        .top-right-btn a {
+            padding: 6px 12px;
+            font-size: 0.8rem;
+        }
+        .header {
+            font-size: 1.25rem;
+            padding: 15px 0;
+        }
+        .dashboard-container iframe {
+            height: 300px !important;
+        }
+        }
+
+        @media (min-width: 481px) and (max-width: 768px) {
+        .top-right-btn {
+            top: 15px;
+            right: 15px;
+        }
+        .top-right-btn a {
+            padding: 8px 14px;
+            font-size: 0.85rem;
+        }
+        .header {
+            font-size: 1.5rem;
+        }
+        .dashboard-container iframe {
+            height: 450px !important;
+        }
+        }
+
     </style>
 </head>
 <body>

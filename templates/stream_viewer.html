@@ -167,6 +167,43 @@
         input:focus, select:focus {
             box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
         }
+
+        @media (max-width: 480px) {
+        .table-container {
+            overflow-x: auto;
+        }
+        th, td {
+            font-size: 12px;
+            padding: 8px 10px;
+        }
+        .filter-container form {
+            flex-direction: column;
+        }
+        .filter-container .w-44 {
+            width: 100% !important;
+        }
+        .pagination {
+            flex-direction: column;
+            gap: 8px;
+        }
+        }
+
+        @media (min-width: 481px) and (max-width: 768px) {
+        .filter-container form {
+            flex-direction: row;
+            flex-wrap: wrap;
+        }
+        .filter-container .w-44 {
+            width: 48% !important;
+        }
+        }
+
+        @media (min-width: 769px) and (max-width: 1024px) {
+        .filter-container .w-44 {
+            width: 32% !important;
+        }
+        }
+
     </style>
 </head>
 <body class="antialiased">
@@ -265,7 +302,7 @@
 
     <footer class="py-6 bg-white shadow-inner">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <a href="{% url 'log_analytics' %}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">Back to Analysis</a>
+            <a href="{% url 'analysis_options' %}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">Back to Analysis</a>
         </div>
     </footer>
 </body>

@@ -190,6 +190,35 @@
             opacity: 0.6;
             cursor: not-allowed;
         }
+        @media (max-width: 480px) {
+        .chatbot-container {
+            padding: 16px;
+            height: 90vh;
+        }
+        .chat-header h1 {
+            font-size: 1.5rem;
+        }
+        .chat-header p {
+            font-size: 0.9rem;
+        }
+        #user-input {
+            font-size: 0.9rem;
+        }
+        #send-button {
+            padding: 10px 16px;
+            font-size: 0.9rem;
+        }
+        }
+
+        @media (min-width: 481px) and (max-width: 768px) {
+        .chatbot-container {
+            padding: 24px;
+        }
+        .chat-header h1 {
+            font-size: 2rem;
+        }
+        }
+
     </style>
 </head>
 <body>

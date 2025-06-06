@@ -122,11 +122,7 @@
       display: block;
     }
 
-    .dropdown-item {
-      color: #fff;
-      transition: background 0.3s ease, color 0.3s ease, transform: 0.3s ease;
-      position: relative;
-    }
+    
 
     .dropdown-item:hover {
       background: #feca57;
@@ -364,7 +360,97 @@
         margin-top: 5px;
       }
     }
-  </style>
+  
+/* Mobile: 320px–480px */
+@media (max-width: 480px) {
+  .contact-hero h1 {
+    font-size: 2rem;
+  }
+  .contact-hero p {
+    font-size: 1rem;
+  }
+  .section-title {
+    font-size: 1.5rem;
+  }
+  .contact-form-section {
+    padding: 40px 15px;
+  }
+  .contact-form {
+    padding: 20px;
+  }
+  .navbar {
+    padding: 10px 15px;
+  }
+  .navbar-brand {
+    font-size: 1.5rem;
+  }
+  .nav-link {
+    font-size: 0.9rem;
+    padding: 8px 12px;
+  }
+  .footer {
+    padding: 40px 20px 20px;
+    font-size: 1rem;
+  }
+  .newsletter-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .newsletter-form input,
+  .newsletter-form button {
+    width: 100%;
+  }
+}
+
+/* Tablet: 481px–768px */
+@media (min-width: 481px) and (max-width: 768px) {
+  .contact-hero h1 {
+    font-size: 2.5rem;
+  }
+  .contact-hero p {
+    font-size: 1.2rem;
+  }
+  .section-title {
+    font-size: 2rem;
+  }
+  .contact-form-section {
+    padding: 60px 20px;
+  }
+  .navbar {
+    padding: 12px 20px;
+  }
+  .nav-link {
+    font-size: 1rem;
+  }
+  .footer {
+    font-size: 1rem;
+  }
+}
+
+/* Laptop: 769px–1024px */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .contact-hero h1 {
+    font-size: 3rem;
+  }
+  .contact-hero p {
+    font-size: 1.3rem;
+  }
+  .section-title {
+    font-size: 2.3rem;
+  }
+  .contact-form-section {
+    padding: 70px 30px;
+  }
+  .nav-link {
+    font-size: 1.05rem;
+  }
+  .footer {
+    font-size: 1.05rem;
+  }
+}
+
+</style>
 </head>
 <body>
 
@@ -388,7 +474,7 @@
             </a>
             <ul class="dropdown-menu" aria-labelledby="featuresDropdown">
               <li class="dropdown-submenu">
-                <a class="dropdown-item" href="#" id="logAnalyticsToggle">Log Analytics</a>
+                <a class="dropdown-item" href="#" id="logAnalyticsToggle">Android Log Analytics</a>
                 <ul class="dropdown-menu" id="logAnalyticsSubmenu" style="display: none;">
                   <li>
                     <a class="dropdown-item" href="{% url 'stream_viewer' %}">Stream Viewer</a>
@@ -445,9 +531,10 @@
       <button type="submit" class="btn btn-primary">Send Message</button>
     </form>
     <div class="contact-info">
-      <p><strong>Email:</strong> <a href="mailto:support@catelogiq.com">support@catelogiq.com</a></p>
-      <p><strong>Phone:</strong> +1 (800) 123-4567</p>
-      <p><strong>Address:</strong> 123 Data Street, Tech City, TC 12345</p>
+      <p><strong>Email:</strong> <a href="mailto:support@quantum-i.ai"> support@quantum-i.ai</a></p>
+      <p><strong>Phone:</strong> 7032917715</p>
+      <p><strong>Address:</strong> Quantum-i Private Limited | 502, 5th floor, SCR Tower, Siddhi Vinayak Nagar, 
+Madhapur, Hyderabad, Telangana - 500081, India. | URL: www.quantum-i.ai</p>
     </div>
   </div>
 
@@ -464,7 +551,7 @@
           <ul class="list-unstyled">
             <li><a href="{% url 'home' %}">Home</a></li>
             <li><a href="#">Features</a></li>
-            <li><a href="{% url 'log_analytics' %}">Log Analytics</a></li>
+            <li><a href="{% url 'log_analytics' %}">Android Log Analytics</a></li>
             <li><a href="{% url 'contact' %}">Contact</a></li>
           </ul>
         </div>
@@ -485,14 +572,14 @@
             <button type="submit">Submit</button>
           </form>
           <div class="social-icons mt-3">
-            <a href="#" target="_blank"><i class="fab fa-github"></i></a>
-            <a href="https://linkedin.com/in/your-profile" target="_blank"><i class="fab fa-linkedin"></i></a>
+            <a href="https://github.com/Quantumiai/" target="_blank"><i class="fab fa-github"></i></a>
+            <a href="https://www.linkedin.com/company/quantumi-ai" target="_blank"><i class="fab fa-linkedin"></i></a>
             <a href="https://twitter.com/your-profile" target="_blank"><i class="fab fa-twitter"></i></a>
           </div>
         </div>
       </div>
       <hr class="my-4" style="border-color: #feca57; opacity: 0.4;">
-      <p class="text-center mt-4">© 2025 CatelogIQ | Built with ❤ by <a href="#">YourName</a></p>
+      <p class="text-center mt-4">© 2025 CatelogIQ | Built with ❤ by <a href="#">Quantum-i.ai</a></p>
     </div>
   </footer>
 
@@ -512,14 +599,7 @@
     });
 
     // Scroll-based animations
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('animate_animated', 'animate_fadeInUp');
-          observer.unobserve(entry.target);
-        }
-      }));
-    }, { threshold: 0.0.2 });
+    
 
     document.querySelectorAll('.section-title, .contact-form, .contact-info, .footer .col-md-4, .footer .col-md-2, .footer .col-md-3').forEach(element => {
       observer.observe(element);
