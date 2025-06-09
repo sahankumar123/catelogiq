@@ -113,3 +113,11 @@ TEMP_DIR = BASE_DIR / 'temp'
 SECRET_KEY = 'mhot9pl*(mz1pc$@xve9qn%v2ogy6cj%-$5wrha0#(4#rlu_6v'
 
 ALLOWED_HOSTS = ['20.97.193.53','127.0.0.1']
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'  # or your email provider's SMTP server
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'nmyaka@quantum-i.ai'  # Replace with your email
+EMAIL_HOST_PASSWORD = 'jjza dham jtnp wuqi'  # Replace with your email password or app-specific password
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER

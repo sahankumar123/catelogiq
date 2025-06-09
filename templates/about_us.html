@@ -243,32 +243,6 @@
       color: #feca57;
     }
 
-    .newsletter-form {
-      max-width: 400px;
-      margin: 0 auto;
-    }
-
-    .newsletter-form input {
-      border-radius: 50px;
-      padding: 12px 20px;
-      border: none;
-      margin-right: 10px;
-      width: 70%;
-    }
-
-    .newsletter-form button {
-      border-radius: 50px;
-      padding: 12px 20px;
-      background: #feca57;
-      color: #1e272e;
-      border: none;
-      transition: background 0.3s ease;
-    }
-
-    .newsletter-form button:hover {
-      background: #fff;
-    }
-
     /* Animations */
     @keyframes fadeInDown {
       from { transform: translateY(-50px); opacity: 0; }
@@ -312,112 +286,97 @@
       .footer {
         text-align: center;
       }
-      .newsletter-form input {
-        width: 100%;
-        margin-bottom: 10px;
-      }
       .dropdown-submenu .dropdown-menu {
         left: 0;
         margin-left: 0;
         margin-top: 5px;
       }
     }
-  
-/* Mobile: 320px–480px */
-@media (max-width: 480px) {
-  .about-hero h1 {
-    font-size: 2rem;
-  }
-  .about-hero p {
-    font-size: 1rem;
-  }
-  .section-title {
-    font-size: 1.5rem;
-  }
-  .about-content {
-    padding: 40px 15px;
-  }
-  .about-content p {
-    font-size: 1rem;
-  }
-  .navbar {
-    padding: 10px 15px;
-  }
-  .navbar-brand {
-    font-size: 1.5rem;
-  }
-  .nav-link {
-    font-size: 0.9rem;
-    padding: 8px 12px;
-  }
-  .footer {
-    padding: 40px 20px 20px;
-    font-size: 1rem;
-  }
-  .newsletter-form {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-  .newsletter-form input,
-  .newsletter-form button {
-    width: 100%;
-  }
-}
 
-/* Tablet: 481px–768px */
-@media (min-width: 481px) and (max-width: 768px) {
-  .about-hero h1 {
-    font-size: 2.5rem;
-  }
-  .about-hero p {
-    font-size: 1.2rem;
-  }
-  .section-title {
-    font-size: 2rem;
-  }
-  .about-content {
-    padding: 60px 20px;
-  }
-  .navbar {
-    padding: 12px 20px;
-  }
-  .nav-link {
-    font-size: 1rem;
-  }
-  .footer {
-    font-size: 1rem;
-  }
-}
+    /* Mobile: 320px–480px */
+    @media (max-width: 480px) {
+      .about-hero h1 {
+        font-size: 2rem;
+      }
+      .about-hero p {
+        font-size: 1rem;
+      }
+      .section-title {
+        font-size: 1.5rem;
+      }
+      .about-content {
+        padding: 40px 15px;
+      }
+      .about-content p {
+        font-size: 1rem;
+      }
+      .navbar {
+        padding: 10px 15px;
+      }
+      .navbar-brand {
+        font-size: 1.5rem;
+      }
+      .nav-link {
+        font-size: 0.9rem;
+        padding: 8px 12px;
+      }
+      .footer {
+        padding: 40px 20px 20px;
+        font-size: 1rem;
+      }
+    }
 
-/* Laptop: 769px–1024px */
-@media (min-width: 769px) and (max-width: 1024px) {
-  .about-hero h1 {
-    font-size: 3rem;
-  }
-  .about-hero p {
-    font-size: 1.3rem;
-  }
-  .section-title {
-    font-size: 2.3rem;
-  }
-  .about-content {
-    padding: 70px 30px;
-  }
-  .nav-link {
-    font-size: 1.05rem;
-  }
-  .footer {
-    font-size: 1.05rem;
-  }
-}
+    /* Tablet: 481px–768px */
+    @media (min-width: 481px) and (max-width: 768px) {
+      .about-hero h1 {
+        font-size: 2.5rem;
+      }
+      .about-hero p {
+        font-size: 1.2rem;
+      }
+      .section-title {
+        font-size: 2rem;
+      }
+      .about-content {
+        padding: 60px 20px;
+      }
+      .navbar {
+        padding: 12px 20px;
+      }
+      .nav-link {
+        font-size: 1rem;
+      }
+      .footer {
+        font-size: 1rem;
+      }
+    }
 
-/* Desktop: 1025px and above — default styling applies */
+    /* Laptop: 769px–1024px */
+    @media (min-width: 769px) and (max-width: 1024px) {
+      .about-hero h1 {
+        font-size: 3rem;
+      }
+      .about-hero p {
+        font-size: 1.3rem;
+      }
+      .section-title {
+        font-size: 2.3rem;
+      }
+      .about-content {
+        padding: 70px 30px;
+      }
+      .nav-link {
+        font-size: 1.05rem;
+      }
+      .footer {
+        font-size: 1.05rem;
+      }
+    }
 
-</style>
+    /* Desktop: 1025px and above — default styling applies */
+  </style>
 </head>
 <body>
-
   <!-- Navigation Bar -->
   <nav class="navbar navbar-expand-lg navbar-dark animate_animated animate_fadeInDown">
     <div class="container-fluid">
@@ -454,7 +413,7 @@
                   </li>
                 </ul>
               </li>
-              <li><a class="dropdown-item" href="#">Text Categorization</a></li>
+              <li><a class="dropdown-item" href="{% url 'text_classification' %}">Text Categorization</a></li>
             </ul>
           </li>
           <li class="nav-item">
@@ -492,16 +451,16 @@
           <h5>About CatelogIQ</h5>
           <p>CatelogIQ provides cutting-edge AI solutions for data categorization and analytics, empowering businesses to make data-driven decisions.</p>
         </div>
-        <div class="col-md-2 animate_animated animatefadeInUp animate_delay-1s">
+        <div class="col-md-2 animate_animated animate_fadeInUp animate_delay-1s">
           <h5>Quick Links</h5>
           <ul class="list-unstyled">
             <li><a href="{% url 'home' %}">Home</a></li>
-            <li><a href="#">Features</a></li>
+            <li><a href="{% url 'text_classification' %}">Text Categorization</a></li>
             <li><a href="{% url 'log_analytics' %}">Android Log Analytics</a></li>
             <li><a href="{% url 'contact' %}">Contact</a></li>
           </ul>
         </div>
-        <div class="col-md-3 animate_animated animatefadeInUp animate_delay-2s">
+        <div class="col-md-3 animate_animated animate_fadeInUp animate_delay-2s">
           <h5>Resources</h5>
           <ul class="list-unstyled">
             <li><a href="{% url 'about_us' %}">About Us</a></li>
@@ -510,16 +469,12 @@
             <li><a href="#">Privacy Policy</a></li>
           </ul>
         </div>
-        <div class="col-md-3 animate_animated animatefadeInUp animate_delay-3s">
+        <div class="col-md-3 animate_animated animate_fadeInUp animate_delay-3s">
           <h5>Stay Connected</h5>
-          <form class="newsletter-form">
-            <input type="email" placeholder="Enter your email" required>
-            <button type="submit">Subscribe</button>
-          </form>
           <div class="social-icons mt-3">
             <a href="https://github.com/Quantumiai/" target="_blank"><i class="fab fa-github"></i></a>
             <a href="https://www.linkedin.com/company/quantumi-ai" target="_blank"><i class="fab fa-linkedin"></i></a>
-            <a href="https://twitter.com/your-profile" target="_blank"><i class="fab fa-twitter"></i></a>
+            <a href="https://www.youtube.com/@Quantum-I-f9d" target="_blank"><i class="fab fa-youtube"></i></a>
           </div>
         </div>
       </div>
