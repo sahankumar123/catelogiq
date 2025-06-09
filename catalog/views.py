@@ -16,6 +16,7 @@ from azure.storage.filedatalake import DataLakeServiceClient
 import requests
 import pandas as pd
 from django.utils import timezone
+from django.core.mail import send_mail
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -532,7 +533,7 @@ def chatbot(request):
             }
             logger.debug(f"Request Payload: {payload}")
 
-            response = requests.post(endpoint_url, headers=headers, json=payload, timeout=30)
+            response = requests.post(endpoint_url, headers=headers, json=payload, timeout=150)
             logger.debug(f"Databricks Response Status: {response.status_code}")
             logger.debug(f"Databricks Response: {response.text}")
 
@@ -666,7 +667,7 @@ def text_classification(request):
                 }
             }
             logger.debug(f"Request Payload: {payload}")
-            response = requests.post(endpoint_url, headers=headers, json=payload, timeout=30)
+            response = requests.post(endpoint_url, headers=headers, json=payload, timeout=150)
             logger.debug(f"Databricks Response Status: {response.status_code}")
             logger.debug(f"Databricks Response: {response.text}")
             if response.status_code == 200:
@@ -712,3 +713,25 @@ def debug_session(request):
         'pipeline_completed': request.session.get('pipeline_completed'),
         'pipeline_update_id': request.session.get('pipeline_update_id')
     })
+
+def contact(request):
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        email = request.POST.get('email')
+        message = request.POST.get('message')
+ 
+        # Send email
+        subject = f'Contact Form Submission from {name}'
+        message_body = f'Name: {name}\nEmail: {email}\nMessage: {message}'
+        from_email = settings.EMAIL_HOST_USER
+        recipient_list = ['nmyaka@quantum-i.ai']
+ 
+        try:
+            send_mail(subject, message_body, from_email, recipient_list)
+            messages.success(request, 'Your message has been sent successfully! Our support team will contact you soon.')
+        except Exception as e:
+            messages.error(request, 'There was an error sending your message. Please try again later.')
+ 
+        return render(request, 'contact.html')
+ 
+    return render(request, 'contact.html')
