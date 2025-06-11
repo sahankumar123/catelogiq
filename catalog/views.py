@@ -330,7 +330,7 @@ def anomaly_detection(request):
         return redirect('log_analytics')
 
     superset_iframe_url = (
-        "http://20.97.193.53:8088/superset/dashboard/a263b95e-754d-480f-b3d0-fa03e43cda33/?standalone=true"
+        "https://superset-on-render-production.up.railway.app/superset/dashboard/fb53c242-1e59-4069-bb99-23eecf62f0eb/?permalink_key=PO5k2P31rRj&standalone=true"
     )
 
     params = request.GET.dict()
@@ -585,7 +585,7 @@ def databricks_dashboard_proxy(request):
         return redirect('log_analytics')
 
     superset_iframe_url = (
-        "http://20.97.193.53:8088/superset/dashboard/050a6f23-c2c7-4840-a1ff-4c26a1674560/?standalone=true"
+        "https://superset-on-render-production.up.railway.app/superset/dashboard/dc794cbe-d35e-4cb8-950b-2e65dda38e9d/?permalink_key=JL2qQjbQmWV&standalone=true"
     )
 
     params = request.GET.dict()
