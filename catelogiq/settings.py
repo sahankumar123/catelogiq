@@ -112,7 +112,7 @@ DATABRICKS_WORKSPACE_URL = config('DATABRICKS_WORKSPACE_URL', default='https://a
 TEMP_DIR = BASE_DIR / 'temp'
 SECRET_KEY = 'mhot9pl*(mz1pc$@xve9qn%v2ogy6cj%-$5wrha0#(4#rlu_6v'
 
-ALLOWED_HOSTS = ['20.97.193.53','127.0.0.1']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '192.168.1.20', '.ngrok-free.app']
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'  # or your email provider's SMTP server

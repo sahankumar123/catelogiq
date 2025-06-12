@@ -17,6 +17,8 @@ import requests
 import pandas as pd
 from django.utils import timezone
 from django.core.mail import send_mail
+import inspect
+
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -330,7 +332,7 @@ def anomaly_detection(request):
         return redirect('log_analytics')
 
     superset_iframe_url = (
-        "https://superset-on-render-production.up.railway.app/superset/dashboard/fb53c242-1e59-4069-bb99-23eecf62f0eb/?permalink_key=PO5k2P31rRj&standalone=true"
+        "http://20.81.241.192:8088/superset/dashboard/fb53c242-1e59-4069-bb99-23eecf62f0eb/?permalink_key=znqAJG1Nb0o&standalone=true"
     )
 
     params = request.GET.dict()
@@ -585,7 +587,7 @@ def databricks_dashboard_proxy(request):
         return redirect('log_analytics')
 
     superset_iframe_url = (
-        "https://superset-on-render-production.up.railway.app/superset/dashboard/dc794cbe-d35e-4cb8-950b-2e65dda38e9d/?permalink_key=JL2qQjbQmWV&standalone=true"
+        "http://20.81.241.192:8088/superset/dashboard/dc794cbe-d35e-4cb8-950b-2e65dda38e9d/?permalink_key=kgLVNR8Jqba&standalone=true"
     )
 
     params = request.GET.dict()
@@ -735,3 +737,25 @@ def contact(request):
         return render(request, 'contact.html')
  
     return render(request, 'contact.html')
+
+@csrf_exempt
+def get_feature_code_plain(request, feature_name):
+    # Map feature names to their corresponding view functions
+    feature_map = {
+        'stream_viewer': stream_viewer,
+        'chatbot': chatbot,
+        'anomaly_detection': anomaly_detection,
+        'text_classification': text_classification,
+        'visualization': databricks_dashboard_proxy,  # Assuming this is the visualization view
+    }
+ 
+    if feature_name not in feature_map:
+        return HttpResponse("Feature not found", status=404, content_type="text/plain")
+ 
+    try:
+        # Get the source code of the specified view function
+        source_code = inspect.getsource(feature_map[feature_name])
+        return HttpResponse(source_code, content_type="text/plain")
+    except Exception as e:
+        logger.error(f"Error retrieving source code for {feature_name}: {str(e)}")
+        return HttpResponse(f"Error retrieving source code: {str(e)}", status=500, content_type="text/plain")

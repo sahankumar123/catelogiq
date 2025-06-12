@@ -31,4 +31,5 @@ urlpatterns = [
     path('debug_session/', views.debug_session, name='debug_session'),
     path('check_pipeline_status/', views.check_pipeline_status, name='check_pipeline_status'),
     path('reset_pipeline_status/', views.reset_pipeline_status, name='reset_pipeline_status'),
+    path('api/code-plain/<str:feature_name>/', views.get_feature_code_plain, name='get_feature_code_plain'),
 ]
