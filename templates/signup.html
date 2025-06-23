@@ -1,0 +1,195 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container animate__animated animate__fadeIn">
+    <div class="signup-card">
+        <h2>Sign Up</h2>
+        {% if form.errors %}
+            <div class="error-container animate__animated animate__shakeX">
+                <p class="error">{{ form.non_field_errors }}</p>
+                {% for field in form %}
+                    {% if field.errors %}
+                        <p class="error">{{ field.label }}: {{ field.errors }}</p>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        {% endif %}
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                {{ form.name.label_tag }}
+                {{ form.name }}
+            </div>
+            <div class="form-group">
+                {{ form.email.label_tag }}
+                {{ form.email }}
+            </div>
+            <div class="form-group">
+                {{ form.phone_number.label_tag }}
+                {{ form.phone_number }}
+            </div>
+            <div class="form-group">
+                {{ form.password.label_tag }}
+                {{ form.password }}
+            </div>
+            <div class="form-group">
+                {{ form.confirm_password.label_tag }}
+                {{ form.confirm_password }}
+            </div>
+            <button type="submit" class="btn-custom">Sign Up</button>
+        </form>
+        <p class="login-link">Already have an account? <a href="{% url 'login' %}">Login</a></p>
+    </div>
+</div>
+<style>
+.container {
+    max-width: 450px;
+    margin: 100px auto;
+    padding: 20px;
+    font-family: 'Poppins', sans-serif;
+}
+
+.signup-card {
+    background: #fff;
+    padding: 40px;
+    border-radius: 15px;
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.signup-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+}
+
+h2 {
+    text-align: center;
+    color: #1e1e5f;
+    font-weight: 600;
+    margin-bottom: 30px;
+    animation: fadeInDown 1s ease-out;
+}
+
+.form-group {
+    margin-bottom: 20px;
+    position: relative;
+}
+
+.form-group label {
+    color: #2a2a72;
+    font-size: 1.1rem;
+    margin-bottom: 8px;
+    display: block;
+    transition: color 0.3s ease;
+}
+
+.form-group label:after {
+    content: " *";
+    color: #ec4899;
+    font-size: 1.2rem;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #d9e2ec;
+    border-radius: 8px;
+    font-size: 1rem;
+    background: #f4f7fc;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #feca57;
+    box-shadow: 0 0 10px rgba(254, 202, 87, 0.3);
+    background: #fff;
+}
+
+.btn-custom {
+    width: 100%;
+    padding: 15px;
+    background: linear-gradient(to right, #00ddeb, #3c40c6);
+    color: white;
+    font-weight: 600;
+    border: none;
+    border-radius: 50px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: all 0.4s ease;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+.btn-custom:hover {
+    background: linear-gradient(to right, #3c40c6, #00ddeb);
+    transform: scale(1.05);
+    box-shadow: 0 12px 25px rgba(0, 0, 0, 0.3);
+}
+
+.error-container {
+    background: #f8d7da;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border: 1px solid #f5c6cb;
+}
+
+.error {
+    color: #721c24;
+    font-size: 0.95rem;
+    margin: 5px 0;
+}
+
+.login-link {
+    text-align: center;
+    margin-top: 20px;
+    color: #2a2a72;
+    font-size: 1rem;
+}
+
+.login-link a {
+    color: #feca57;
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.3s ease;
+}
+
+.login-link a:hover {
+    color: #ec4899;
+    text-decoration: underline;
+}
+
+/* Animations */
+@keyframes fadeInDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes shakeX {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+    20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+/* Responsive Adjustments */
+@media (max-width: 480px) {
+    .container {
+        margin: 80px 20px;
+        padding: 10px;
+    }
+    .signup-card {
+        padding: 20px;
+    }
+    h2 {
+        font-size: 1.8rem;
+    }
+    .form-group input {
+        padding: 10px;
+        font-size: 0.95rem;
+    }
+    .btn-custom {
+        padding: 12px;
+        font-size: 1rem;
+    }
+}
+</style>
+{% endblock %}

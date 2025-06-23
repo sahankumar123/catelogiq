@@ -1,13 +1,16 @@
 {% load static %}
+
+{% block content %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CatelogIQ - Text Classification</title>
+    <title>QuantumI - Text Classification</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="icon" type="image/x-icon" href="{% static 'img/favicon.ico' %}">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
         body {
             font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -28,7 +31,6 @@
             position: sticky;
             top: 0;
             z-index: 1000;
-            position: relative;
         }
 
         .header h1 {
@@ -125,32 +127,23 @@
             box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
         }
 
-        .message-type-selector {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-            justify-content: center;
-        }
-
-        .message-type-button {
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.5rem;
+        .source-type-select {
             background-color: #e0e7ff;
             color: #4338ca;
             font-weight: 500;
-            cursor: pointer;
-            transition: background-color 0.2s ease, color 0.2s ease;
             border: 1px solid #c7d2fe;
+            transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
         }
 
-        .message-type-button.active {
-            background-color: #4338ca;
-            color: #ffffff;
-            border-color: #4338ca;
-        }
-
-        .message-type-button:hover:not(.active) {
+        .source-type-select:hover {
             background-color: #c7d2fe;
+            border-color: #a5b4fc;
+        }
+
+        .source-type-select:focus {
+            background-color: #ffffff;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
         }
 
         .submit-button, .action-button {
@@ -182,36 +175,36 @@
             transform: none;
         }
 
-        .output-card {
-            min-height: 250px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-
         .response-box {
             background-color: #f8fafc;
             border: 1px dashed #d1d5db;
             border-radius: 0.5rem;
             padding: 1rem;
-            min-height: 120px;
+            min-height: 80px;
             color: #1f2937;
             font-family: 'monospace';
             white-space: pre-wrap;
             word-wrap: break-word;
             margin-bottom: 1rem;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
             text-align: center;
+            animation: fadeIn 0.5s ease-in;
         }
 
-        .message-content {
-            display: none;
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
-        .message-content.active {
-            display: block;
+        .queue-select {
+            margin-top: 0.5rem;
+            width: 100%;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            border: 1px solid #d1d5db;
         }
 
         .button-group {
@@ -221,173 +214,67 @@
         }
 
         @media (max-width: 480px) {
-            .back-button {
-                right: 0.8rem;
-                padding: 0.3rem 0.6rem;
-                font-size: 0.75rem;
-            }
-            }
-
-        @media (min-width: 481px) and (max-width: 768px) {
-        .back-button {
-            right: 1rem;
-            padding: 0.4rem 0.8rem;
-            font-size: 0.8rem;
-        }
-        }
-
-        @media (min-width: 769px) and (max-width: 1024px) {
-        .back-button {
-            right: 1.25rem;
-            padding: 0.5rem 1rem;
-            font-size: 0.9rem;
-        }
-        }
-
-        @media (min-width: 1025px) {
-        .back-button {
-            right: 1.5rem;
-            padding: 0.6rem 1.2rem;
-            font-size: 1rem;
-        }
-        }
-
-            
-        @media (max-width: 480px) {
-        .container {
-            flex-direction: column;
-            padding: 1rem;
-            gap: 1rem;
-        }
-
-        .input-card,
-        .output-card {
-            padding: 1rem;
-            width: 100%;
-        }
-
-        .input-card h2,
-        .output-card h2 {
-            font-size: 1.5rem;
-        }
-
-        .submit-button,
-        .action-button {
-            font-size: 1rem;
-            padding: 0.75rem;
-        }
-
-        .response-box {
-            font-size: 0.9rem;
-            padding: 0.75rem;
-        }
-
-        .message-type-selector {
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-
-        .back-button {
-            right: 1rem;
-            font-size: 0.75rem;
-            padding: 0.4rem 0.8rem;
-        }
+            .container { flex-direction: column; padding: 1rem; gap: 1rem; }
+            .input-card, .output-card { padding: 1rem; width: 100%; }
+            .input-card h2, .output-card h2 { font-size: 1.5rem; }
+            .submit-button, .action-button { font-size: 1rem; padding: 0.75rem; }
+            .response-box { font-size: 0.9rem; padding: 0.75rem; }
+            .back-button { right: 0.8rem; padding: 0.3rem 0.6rem; font-size: 0.75rem; }
         }
 
         @media (min-width: 481px) and (max-width: 768px) {
-        .container {
-            flex-direction: column;
-            padding: 1.5rem;
-            gap: 1.5rem;
-        }
-
-        .input-card,
-        .output-card {
-            width: 100%;
-        }
-
-        .input-card h2,
-        .output-card h2 {
-            font-size: 1.8rem;
-        }
+            .container { flex-direction: column; padding: 1.5rem; gap: 1.5rem; }
+            .input-card, .output-card { width: 100%; }
+            .input-card h2, .output-card h2 { font-size: 1.8rem; }
+            .back-button { right: 1rem; padding: 0.4rem 0.8rem; font-size: 0.8rem; }
         }
 
         @media (min-width: 769px) and (max-width: 1024px) {
-        .container {
-            flex-wrap: wrap;
-            flex-direction: row;
-            justify-content: center;
-            padding: 2rem;
-            gap: 2rem;
-        }
-
-        .input-card,
-        .output-card {
-            width: 48%;
-        }
+            .container { flex-wrap: wrap; flex-direction: row; justify-content: center; padding: 2rem; gap: 2rem; }
+            .input-card, .output-card { width: 48%; }
+            .back-button { right: 1.25rem; padding: 0.5rem 1rem; font-size: 0.9rem; }
         }
 
         @media (min-width: 1025px) {
-        .container {
-            flex-direction: row;
-            flex-wrap: nowrap;
-            gap: 2rem;
-            justify-content: center;
+            .container { flex-direction: row; flex-wrap: nowrap; gap: 2rem; justify-content: center; }
+            .input-card, .output-card { width: 45%; }
+            .back-button { right: 1.5rem; padding: 0.6rem 1.2rem; font-size: 1rem; }
         }
-
-        .input-card,
-        .output-card {
-            width: 45%;
-        }
-        }
-
-</style>
+    </style>
 </head>
 <body>
     <header class="header">
-        <h1>CatelogIQ - Text Classification</h1>
-        <button class="back-button" onclick="window.location.href = '/'">Back</button>
+        <h1>QuantumI - Text Classification</h1>
+        <a href="{% url 'home' %}" class="back-button">Back</a>
     </header>
 
     <div class="container">
         <div class="input-card">
             <h2>Enter your message</h2>
-            <div class="message-type-selector">
-                <button class="message-type-button active" data-type="email">Mail Message</button>
-                <button class="message-type-button" data-type="sms">Text Message</button>
-                <button class="message-type-button" data-type="whatsapp">WhatsApp Message</button>
-            </div>
-
             <form id="classification-form">
                 {% csrf_token %}
-                <div id="email-inputs" class="message-content active">
-                    <div class="form-group">
-                        <label for="subject">Subject:</label>
-                        <input type="text" id="subject" name="subject" placeholder="Enter email subject">
-                    </div>
-                    <div class="form-group">
-                        <label for="email-message">Message:</label>
-                        <textarea id="email-message" name="text" rows="6" placeholder="Enter your email message"></textarea>
-                    </div>
+                <div class="form-group">
+                    <label for="message_type">Source Type</label>
+                    <select class="form-select source-type-select" id="message_type" name="message_type" required>
+                        <option value="email">Email</option>
+                        <option value="whatsapp">WhatsApp</option>
+                        <option value="message">message</option>
+                    </select>
                 </div>
 
-                <div id="sms-inputs" class="message-content">
-                    <div class="form-group">
-                        <label for="sms-message">Message:</label>
-                        <textarea id="sms-message" name="text" rows="6" placeholder="Enter your SMS message"></textarea>
-                    </div>
+                <div class="form-group" id="subject-field">
+                    <label for="subject">Subject (Only for Email)</label>
+                    <input type="text" id="subject" name="subject" placeholder="Enter subject">
                 </div>
 
-                <div id="whatsapp-inputs" class="message-content">
-                    <div class="form-group">
-                        <label for="whatsapp-message">Message:</label>
-                        <textarea id="whatsapp-message" name="text" rows="6" placeholder="Enter your WhatsApp message"></textarea>
-                    </div>
+                <div class="form-group">
+                    <label for="text">Message</label>
+                    <textarea id="text" name="text" rows="6" placeholder="Enter your message here..." required></textarea>
                 </div>
 
                 <div class="button-group">
-                    <button type="button" id="process-btn" class="submit-button">Process It</button>
-                    <select id="sample-questions" onchange="populateSampleQuestion()">
+                    <button type="submit" class="submit-button">Process It</button>
+                    <select id="sample-questions" class="form-select" onchange="populateSampleQuestion()">
                         <option value="">Sample Questions</option>
                     </select>
                 </div>
@@ -396,10 +283,30 @@
 
         <div class="output-card">
             <h2>Classification Result</h2>
-            <div id="result" class="response-box">
-                Classification result will appear here...
+            <div id="classification-box" class="response-box">
+                <label for="queue-select"></label>
+                <select id="queue-select" class="queue-select" disabled>
+                    <option value="">Waiting for result...</option>
+                    <option value="Technical Support">Technical Support</option>
+                    <option value="Returns and Exchanges">Returns and Exchanges</option>
+                    <option value="Billing and Payments">Billing and Payments</option>
+                    <option value="Sales and Pre-Sales">Sales and Pre-Sales</option>
+                    <option value="Service Outages and Maintenance">Service Outages and Maintenance</option>
+                    <option value="Product Support">Product Support</option>
+                    <option value="IT Support">IT Support</option>
+                    <option value="Customer Service">Customer Service</option>
+                    <option value="Human Resources">Human Resources</option>
+                    <option value="General Inquiry">General Inquiry</option>
+                </select>
             </div>
-            <button type="button" class="action-button take-action-btn">Take Action</button>
+
+
+            <h2>Urgency</h2>
+            <div id="urgency-box" class="response-box">
+                Urgency level will appear here...
+            </div>
+
+            <button id="take-action" class="action-button" style="display: none;">Take Action</button>
         </div>
     </div>
 
@@ -432,7 +339,7 @@
                     body: "Dear Support Team, I am submitting a report regarding a significant disruption in the Wi-Fi service that is currently impacting several employees in the office. This outage has resulted in the loss of several devices, greatly hindering our ability to manage accounts and oversee ongoing campaigns efficiently. The problem started unexpectedly, with no prior notice through scheduled maintenance alerts. I suspect the issue might be due to a faulty network adapter or ongoing maintenance work."
                 }
             ],
-            sms: [
+            whatsapp: [
                 {
                     message: "Hi, we're facing multiple service disruptions affecting project work and client interactions. Productivity is down and deadlines are being missed. Initial checks point to network hardware issues. I've tried basic troubleshooting but the issue remains. Please assist ASAP."
                 },
@@ -446,7 +353,7 @@
                     message: "Hi, I’d like detailed info on data integration for analytics platforms that work with large-scale data lakes. Specifically, we need support for Python-based ML setups. Also, what data sources are supported, and what APIs are available? This is key for building custom solutions."
                 }
             ],
-            whatsapp: [
+            message: [
                 {
                     message: "Hi, we're facing multiple service disruptions affecting project work and client interactions. Productivity is down and deadlines are slipping. Initial checks suggest network hardware issues. I've tried basic troubleshooting (reboots, diagnostics), but no luck. Please assist ASAP."
                 },
@@ -462,139 +369,153 @@
             ]
         };
 
-        document.addEventListener('DOMContentLoaded', function() {
-            const messageTypeButtons = document.querySelectorAll('.message-type-button');
-            const messageContents = document.querySelectorAll('.message-content');
+        $(document).ready(function() {
+            // Initialize sample questions for default selection (email)
+            updateSampleQuestions('email');
 
-            messageTypeButtons.forEach(button => {
-                button.addEventListener('click', () => {
-                    messageTypeButtons.forEach(btn => btn.classList.remove('active'));
-                    messageContents.forEach(content => content.classList.remove('active'));
+            // Show/hide subject field and update sample questions based on message type
+            $('#message_type').change(function() {
+                $('#subject-field').css('display', this.value === 'email' ? 'block' : 'none');
+                updateSampleQuestions(this.value);
+            });
 
-                    button.classList.add('active');
-                    const targetContentType = button.dataset.type;
-                    document.getElementById(`${targetContentType}-inputs`).classList.add('active');
-                    updateSampleQuestions(targetContentType);
+            // Default subject visibility
+            $('#subject-field').css('display', 'block');
+
+            // Form submission handler
+            $('#classification-form').submit(function(e) {
+                e.preventDefault();
+                const message_type = $('#message_type').val();
+                const subject = $('#subject').val();
+                const text = $('#text').val();
+                const $submitButton = $(this).find('.submit-button');
+
+                if (message_type === 'email' && (!text.trim() || !subject.trim())) {
+                    $('#classification-result').text('Please provide both subject and message for email classification.').show();
+                    $('#urgency-box').text('No urgency result.').show();
+                    $('#queue-select').val(queue).prop('disabled', false);
+
+                    $('#take-action').hide();
+                    return;
+                } else if (!text.trim()) {
+                    $('#classification-result').text('Please provide a valid text to classify.').show();
+                    $('#urgency-box').text('No urgency result.').show();
+                    $('#queue-select').val(queue).prop('disabled', false);
+
+                    $('#take-action').hide();
+                    return;
+                }
+
+                // Disable button and update text
+                $submitButton.prop('disabled', true).text('Processing...');
+                $('#classification-result').text('Processing...');
+                $('#urgency-box').text('Processing...');
+                $('#queue-select').hide();
+                $('#take-action').hide();
+
+                $.ajax({
+                    url: '{% url "text_classification" %}',
+                    type: 'POST',
+                    headers: {
+                        'X-CSRFToken': $('input[name="csrfmiddlewaretoken"]').val(),
+                        'Content-Type': 'application/json'
+                    },
+                    data: JSON.stringify({
+                        message_type: message_type,
+                        text: text,
+                        subject: subject
+                    }),
+                    success: function(response) {
+                        // Extract only the "Classified as" value
+                        const queueMatch = response.classification.match(/Classified as = "([^"]+)"/);
+                        const queue = queueMatch && queueMatch[1] ? queueMatch[1] : 'No classification found.';
+                        // Extract only the urgency value
+                        const urgencyMatch = response.urgency.match(/Urgency Level = "([^"]+)"/);
+                        const urgency = urgencyMatch && urgencyMatch[1] ? urgencyMatch[1] : 'No urgency found.';
+                        $('#classification-result').text(queue).show();
+                        $('#queue-select').val(queue).prop('disabled', false).show();
+                        $('#urgency-box').text(urgency).show();
+                        $('#take-action').show();
+                    },
+                    error: function(xhr) {
+                        $('#classification-result').text(xhr.responseJSON?.error || 'An error occurred.').show();
+                        $('#urgency-box').text('Error retrieving urgency.').show();
+                        $('#queue-select').hide();
+                        $('#take-action').hide();
+                    },
+                    complete: function() {
+                        // Re-enable button and restore text
+                        $submitButton.prop('disabled', false).text('Process It');
+                    }
                 });
             });
 
-            // Initialize sample questions for default selection (email)
-            updateSampleQuestions('email');
+            // Handle queue dropdown change
+            $('#queue-select').change(function() {
+                const new_queue = $(this).val();
+                $.ajax({
+                    url: '{% url "text_classification" %}',
+                    type: 'POST',
+                    headers: {
+                        'X-CSRFToken': $('input[name="csrfmiddlewaretoken"]').val(),
+                        'Content-Type': 'application/json'
+                    },
+                    data: JSON.stringify({
+                        new_queue: new_queue
+                    }),
+                    success: function(response) {
+                        $('#classification-result').text(new_queue);
+                    },
+                    error: function(xhr) {
+                        $('#classification-result').text(xhr.responseJSON?.error || 'Failed to update classification.');
+                    }
+                });
+            });
+
+            // Take action button
+            $('#take-action').click(function() {
+                const classificationText = $('#classification-result').text().trim();
+                if (classificationText === 'Classification result will appear here...' || classificationText === 'Processing...' || classificationText.startsWith('Error')) {
+                    alert('Please process a message first.');
+                    return;
+                }
+                alert('Action taken based on classification: ' + classificationText);
+            });
         });
 
         function updateSampleQuestions(messageType) {
-            const select = document.getElementById('sample-questions');
-            select.innerHTML = '<option value="">Sample Questions</option>';
+            const select = $('#sample-questions');
+            select.empty().append('<option value="">Sample Questions</option>');
             const questions = sampleQuestions[messageType];
             if (questions && questions.length > 0) {
                 questions.forEach((q, index) => {
-                    const option = document.createElement('option');
-                    option.value = index;
-                    option.text = q.subject || q.message.substring(0, 50) + (q.message.length > 50 ? '...' : '');
-                    option.dataset.type = messageType;
-                    select.appendChild(option);
+                    const option = $('<option></option>')
+                        .val(index)
+                        .text(q.subject || q.message.substring(0, 50) + (q.message.length > 50 ? '...' : ''))
+                        .attr('data-type', messageType);
+                    select.append(option);
                 });
             }
         }
 
         function populateSampleQuestion() {
-            const select = document.getElementById('sample-questions');
-            const index = select.value;
+            const select = $('#sample-questions');
+            const index = select.val();
             if (!index) return;
-            const messageType = select.options[select.selectedIndex].dataset.type;
+            const messageType = select.find(':selected').data('type');
             const question = sampleQuestions[messageType][index];
 
-            document.getElementById('subject').value = '';
-            document.getElementById('email-message').value = '';
-            document.getElementById('sms-message').value = '';
-            document.getElementById('whatsapp-message').value = '';
+            $('#subject').val('');
+            $('#text').val('');
 
             if (messageType === 'email') {
-                document.getElementById('subject').value = question.subject;
-                document.getElementById('email-message').value = question.body;
-            } else if (messageType === 'sms') {
-                document.getElementById('sms-message').value = question.message;
-            } else if (messageType === 'whatsapp') {
-                document.getElementById('whatsapp-message').value = question.message;
+                $('#subject').val(question.subject);
+                $('#text').val(question.body);
+            } else {
+                $('#text').val(question.message);
             }
-        }
-
-        document.getElementById('process-btn').addEventListener('click', function() {
-            const button = this;
-            const activeMessageTypeButton = document.querySelector('.message-type-button.active');
-            const messageType = activeMessageTypeButton.dataset.type;
-            const text = document.getElementById(`${messageType}-message`).value;
-            const subject = messageType === 'email' ? document.getElementById('subject').value : null;
-            const resultBox = document.getElementById('result');
-
-            if (messageType === 'email' && (!text.trim() || !subject.trim())) {
-                resultBox.textContent = 'Please provide both subject and message for email classification.';
-                return;
-            } else if (!text.trim()) {
-                resultBox.textContent = 'Please provide a valid text to classify.';
-                return;
-            }
-
-            // Disable button and update text
-            button.disabled = true;
-            button.textContent = 'Processing...';
-            resultBox.textContent = 'Processing...';
-
-            fetch('/text-classification/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': getCookie('csrftoken')
-                },
-                body: JSON.stringify({ message_type: messageType, text: text, subject: subject })
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                resultBox.textContent = data.response || 'No response received.';
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                resultBox.textContent = `Error: ${error.message || 'Request failed. Please try again.'}`;
-            })
-            .finally(() => {
-                // Re-enable button and restore text
-                button.disabled = false;
-                button.textContent = 'Process It';
-            });
-        });
-
-        document.querySelector('.take-action-btn').addEventListener('click', function() {
-            const resultBox = document.getElementById('result');
-            const responseText = resultBox.textContent.trim();
-
-            if (responseText === 'Classification result will appear here...' || responseText === 'Processing...' || responseText.startsWith('Error')) {
-                alert('Please process a message first.');
-                return;
-            }
-
-            alert('Action taken based on classification: ' + responseText);
-        });
-
-        function getCookie(name) {
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-                const cookies = document.cookie.split(';');
-                for (let i = 0; i < cookies.length; i++) {
-                    const cookie = cookies[i].trim();
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
-                    }
-                }
-            }
-            return cookieValue;
         }
     </script>
 </body>
 </html>
-
+{% endblock %}

@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>About Us - CatelogIQ</title>
+  <title>About Us - QuantumI</title>
 
   <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
@@ -140,9 +140,15 @@
 
     .dropdown-submenu .dropdown-menu {
       top: 0;
-      left: -100%;
-      margin-left: -10px;
+      left: -90%; /* Reduce this value (e.g., to -90% or less) to bring it closer */
+      margin-left: 0px; /* Decrease this value (e.g., to -5px or 0) */
+      margin-top: 0; /* Ensure no extra top margin */
       display: none;
+    }
+
+    /* Reduce spacing between dropdown items */
+    .dropdown-item {
+      padding: 5px 10px; /* Reduce padding (default might be higher) */
     }
 
     .dropdown-submenu:hover .dropdown-menu {
@@ -380,7 +386,7 @@
   <!-- Navigation Bar -->
   <nav class="navbar navbar-expand-lg navbar-dark animate_animated animate_fadeInDown">
     <div class="container-fluid">
-      <a class="navbar-brand" href="{% url 'home' %}">CatelogIQ</a>
+      <a class="navbar-brand" href="{% url 'home' %}">QuantumI</a>
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
         data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false"
         aria-label="Toggle navigation">
@@ -430,15 +436,15 @@
 
   <!-- About Us Hero Section -->
   <section class="about-hero">
-    <h1>About CatelogIQ</h1>
+    <h1>About QuantumI</h1>
     <p>Empowering businesses with AI-driven data solutions for smarter insights and decision-making.</p>
   </section>
 
   <!-- About Content -->
   <div class="about-content">
     <h2 class="section-title">Who We Are</h2>
-    <p>CatelogIQ is a pioneering technology company dedicated to transforming how businesses interact with their data. Founded by a team of passionate data scientists and engineers, we specialize in AI-driven solutions for android log analytics and text categorization.</p>
-    <p>Our mission is to empower organizations to unlock the full potential of their data through intuitive, scalable, and intelligent tools. Whether it’s detecting anomalies in real-time logs or categorizing vast amounts of unstructured text, CatelogIQ delivers actionable insights that drive success.</p>
+    <p>QuantumI is a pioneering technology company dedicated to transforming how businesses interact with their data. Founded by a team of passionate data scientists and engineers, we specialize in AI-driven solutions for android log analytics and text categorization.</p>
+    <p>Our mission is to empower organizations to unlock the full potential of their data through intuitive, scalable, and intelligent tools. Whether it’s detecting anomalies in real-time logs or categorizing vast amounts of unstructured text, QuantumI delivers actionable insights that drive success.</p>
     <h2 class="section-title">Our Vision</h2>
     <p>We envision a world where every organization, regardless of size, can harness the power of AI to make informed decisions. By combining cutting-edge machine learning with user-friendly interfaces, we aim to democratize data analytics and make it accessible to all.</p>
   </div>
@@ -448,8 +454,8 @@
     <div class="container">
       <div class="row g-4">
         <div class="col-md-4 animate_animated animate_fadeInUp">
-          <h5>About CatelogIQ</h5>
-          <p>CatelogIQ provides cutting-edge AI solutions for data categorization and analytics, empowering businesses to make data-driven decisions.</p>
+          <h5>About QuantumI</h5>
+          <p>QuantumI provides cutting-edge AI solutions for data categorization and analytics, empowering businesses to make data-driven decisions.</p>
         </div>
         <div class="col-md-2 animate_animated animate_fadeInUp animate_delay-1s">
           <h5>Quick Links</h5>
@@ -479,7 +485,10 @@
         </div>
       </div>
       <hr class="my-4" style="border-color: #feca57; opacity: 0.3;">
-      <p class="text-center mt-3">© 2025 CatelogIQ | Built with ❤ by <a href="https://quantum-i.ai/">Quantum-i.ai</a></p>
+      <p class="text-center mt-3" style="display: flex; justify-content: center; align-items: center; gap: 8px;">
+        <img src="{% static 'C:\Projects\Working\catelogiq\static\quantumi_logo.jpg' %}" alt="QuantumI Logo" style="height: 32px;">
+        © 2025 QuantumI | Built with ❤ by <a href="https://quantum-i.ai/" style="margin-left: 4px; text-decoration: none;">Quantum-i.ai</a>
+      </p>
     </div>
   </footer>
 

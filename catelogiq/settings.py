@@ -15,6 +15,8 @@ from pathlib import Path
 from decouple import config
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_URL = 'http://127.0.0.1:8000' 
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '192.168.1.15', '.ngrok-free.app']
 
 LOGGING = {
     'version': 1,
@@ -33,13 +35,12 @@ LOGGING = {
 }
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
+    'catalog',
+    'django.contrib.staticfiles',
+    'django.contrib.messages',
+    'django.contrib.sessions',
     'django.contrib.auth',
     'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'catalog',
 ]
 
 MIDDLEWARE = [
@@ -47,7 +48,7 @@ MIDDLEWARE = [
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    # 'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -63,7 +64,6 @@ TEMPLATES = [
             'context_processors': [
                 'django.template.context_processors.debug',
                 'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
             ],
         },
@@ -73,7 +73,7 @@ TEMPLATES = [
 WSGI_APPLICATION = 'catelogiq.wsgi.application'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage' 
  
-# STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 # STATICFILES_DIRS = (str(BASE_DIR.joinpath('staticfiles')),)
 # STATIC_URL = '/staticfiles/'
 
@@ -103,16 +103,11 @@ AZURE_FILE_SYSTEM = config('AZURE_FILE_SYSTEM')
 # Databricks settings
 DATABRICKS_HOST = config('DATABRICKS_HOST', default='https://adb-3623933893880845.5.azuredatabricks.net')
 DATABRICKS_TOKEN = config('DATABRICKS_TOKEN', default='dapi44c5e998d105e25008af210c77e37f3a-3')
-DATABRICKS_CLUSTER_ID = config('DATABRICKS_CLUSTER_ID')
 DATABRICKS_HTTP_PATH = config('DATABRICKS_HTTP_PATH', default='/sql/1.0/warehouses/50e55df2f9229a9e')
-DATABRICKS_DASHBOARD_ID = config('DATABRICKS_DASHBOARD_ID', default='01f031711a751af7876b9008149aa390')  # your dashboard id
-DATABRICKS_WORKSPACE_URL = config('DATABRICKS_WORKSPACE_URL', default='https://adb-3623933893880845.5.azuredatabricks.net')  # your workspace URL
+DATABRICKS_DASHBOARD_ID = config('DATABRICKS_DASHBOARD_ID', default='01f031711a751af7876b9008149aa390')
+DATABRICKS_WORKSPACE_URL = config('DATABRICKS_WORKSPACE_URL', default='https://adb-3623933893880845.5.azuredatabricks.net')
 
-# Temporary file storage
-TEMP_DIR = BASE_DIR / 'temp'
-SECRET_KEY = 'mhot9pl*(mz1pc$@xve9qn%v2ogy6cj%-$5wrha0#(4#rlu_6v'
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '192.168.1.20', '.ngrok-free.app']
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'  # or your email provider's SMTP server
@@ -121,3 +116,11 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'nmyaka@quantum-i.ai'  # Replace with your email
 EMAIL_HOST_PASSWORD = 'jjza dham jtnp wuqi'  # Replace with your email password or app-specific password
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+# Temporary file storage
+TEMP_DIR = BASE_DIR / 'temp'
+SECRET_KEY = config('SECRET_KEY', default='mhot9pl*(mz1pc$@xve9qn%v2ogy6cj%-$5wrha0#(4#rlu_6v')
+
+SESSION_COOKIE_AGE = 300
+
+
