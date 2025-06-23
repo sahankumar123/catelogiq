@@ -1,24 +1,15 @@
 from django.db import models
-import hashlib
+from django.utils import timezone
 
-class UploadedFile(models.Model):
-    filename = models.CharField(max_length=255)
-    file_hash = models.CharField(max_length=64, unique=True)
-    analyzed = models.BooleanField(default=False)
-    output_path = models.CharField(max_length=512, blank=True, null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    uploaded_at = models.DateTimeField(auto_now_add=True)
 
-    def save(self, *args, **kwargs):
-        if not self.file_hash:
-            self.file_hash = self.calculate_hash()
-        super().save(*args, **kwargs)
+class PasswordResetToken(models.Model):
+    email = models.EmailField(max_length=254)
+    token = models.CharField(max_length=36, unique=True)  # UUID length
+    created_at = models.DateTimeField(default=timezone.now)
+    expires_at = models.DateTimeField()
 
-    def calculate_hash(self):
-        return hashlib.sha256(self.filename.encode()).hexdigest()
-    
     def __str__(self):
-        return self.filename
+        return f"Token for {self.email}"
 
-    class Meta:
-        indexes = [models.Index(fields=['file_hash'])]
+    def is_valid(self):
+        return timezone.now() <= self.expires_at

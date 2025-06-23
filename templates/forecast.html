@@ -1,0 +1,185 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row align-items-center mb-4">
+    <div class="col text-start">
+        <!-- Empty column for spacing -->
+    </div>
+    <div class="col text-center">
+        <h1 class="my-2">Move Forecast</h1>
+    </div>
+    <div class="col text-end">
+        <a href="{% url 'home' %}" class="btn btn-outline-secondary">← Back</a>
+    </div>
+</div>
+ 
+    <p class="mb-4 text-center">Enter a date, branch, and optional move type to forecast move counts using our API.</p>
+ 
+    {% if error %}
+        <div class="alert alert-danger" role="alert">
+            {{ error }}
+        </div>
+    {% endif %}
+
+    <div class="row">
+        <!-- Form (Questions) -->
+        <div class="col-md-5 mb-4">
+            <form method="POST" action="{% url 'forecast' %}">
+                {% csrf_token %}
+                <!-- Date Input -->
+                <div class="mb-3">
+                    <label for="date" class="form-label">Select Date</label>
+                    <input type="date" class="form-control" id="date" name="date" 
+                           min="{{ min_date }}" max="2025-07-31" value="{{ min_date }}" 
+                           required title="Choose a date between today and July 31, 2025">
+                </div>
+                <!-- Branch Dropdown -->
+                <div class="mb-3">
+                    <label for="branch" class="form-label">Select Branch</label>
+                    <select class="form-select" id="branch" name="branch" required>
+                        <option value="" disabled {% if not selected_branch %}selected{% endif %}>Select a branch</option>
+                        {% for branch in branch_options %}
+                            <option value="{{ branch }}" {% if branch == selected_branch %}selected{% endif %}>{{ branch }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <!-- Move Type Dropdown -->
+                <div class="mb-3">
+                    <label for="move_type" class="form-label">Select Move Type (Optional)</label>
+                    <select class="form-select" id="move_type" name="move_type">
+                        <option value="" {% if not selected_move_type %}selected{% endif %}>None</option>
+                        {% for move_type in move_type_options %}
+                            <option value="{{ move_type }}" {% if move_type == selected_move_type %}selected{% endif %}>{{ move_type }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <!-- Submit Button -->
+                <button type="submit" class="btn btn-primary">Get Forecast</button>
+            </form>
+        </div>
+
+        <!-- Line Chart -->
+        {% if chart_data %}
+            <div class="col-md-7 mb-4">
+                <div class="alert alert-info" role="alert">
+                    <h4 class="alert-heading">Move Trends</h4>
+                    <canvas id="moveTrendsChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+            <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    try {
+                        const chartData = {{ chart_data|safe }};
+                        console.log("Chart Data:", chartData);
+                        const ctx = document.getElementById('moveTrendsChart').getContext('2d');
+                        new Chart(ctx, {
+                            type: 'line',
+                            data: {
+                                labels: chartData.forecast.dates,
+                                datasets: [
+                                    {
+                                        label: 'Historical Average (2019-2024)',
+                                        data: chartData.historical.moves,
+                                        borderColor: '#1f77b4',
+                                        backgroundColor: '#1f77b4',
+                                        borderDash: [5, 5], // Dotted line
+                                        fill: false,
+                                        tension: 0.1,
+                                        pointRadius: 4,
+                                        pointStyle: 'circle'
+                                    },
+                                    {
+                                        label: 'Current Forecast (2025)',
+                                        data: chartData.forecast.moves,
+                                        borderColor: '#ff7f0e',
+                                        backgroundColor: '#ff7f0e',
+                                        fill: false,
+                                        tension: 0.1,
+                                        pointRadius: 4,
+                                        pointStyle: 'square'
+                                    }
+                                ]
+                            },
+                            options: {
+                                responsive: true,
+                                scales: {
+                                    x: {
+                                        title: {
+                                            display: true,
+                                            text: 'Date'
+                                        },
+                                        ticks: {
+                                            autoSkip: true,
+                                            maxRotation: 45,
+                                            minRotation: 45
+                                        }
+                                    },
+                                    y: {
+                                        title: {
+                                            display: true,
+                                            text: 'Number of Moves'
+                                        },
+                                        beginAtZero: true,
+                                        suggestedMax: Math.max(...chartData.historical.moves, ...chartData.forecast.moves) * 1.2 || 10
+                                    }
+                                },
+                                plugins: {
+                                    legend: {
+                                        display: true,
+                                        position: 'top'
+                                    },
+                                    title: {
+                                        display: true,
+                                        text: chartData.title
+                                    }
+                                }
+                            }
+                        });
+                    } catch (error) {
+                        console.error("Chart.js Error:", error);
+                        alert("Failed to render chart. Please check the console for details.");
+                    }
+                });
+            </script>
+        {% endif %}
+    </div>
+
+    <!-- Table -->
+    {% if table_data %}
+        <div class="row">
+            <div class="col-12">
+                <div class="alert alert-success" role="alert">
+                    <h4 class="alert-heading">Forecast Results</h4>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-bordered">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th scope="col">Date</th>
+                                    <th scope="col">Predicted Moves</th>
+                                    <th scope="col">Comment</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for row in table_data %}
+                                    <tr>
+                                        <td>{{ row.date|default:"N/A" }}</td>
+                                        <td>{{ row.predicted_moves|default:"N/A" }}</td>
+                                        <td>{{ row.comment|default:"N/A" }}</td>
+                                    </tr>
+                                {% empty %}
+                                    <tr>
+                                        <td colspan="3" class="text-center">No forecast data available.</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Bootstrap JS for form interaction -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+{% endblock %}

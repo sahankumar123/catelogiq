@@ -1,3 +1,5 @@
+# feature_snippets/__init__.py
+ 
 def get_stream_viewer_code():
     return """
 def stream_logs():
@@ -39,3 +41,5 @@ def visualize_logs(df):
     plt.title('Log Level Distribution')
     plt.show()
 """
+ 
+ 
